@@ -1,0 +1,855 @@
+{
+  "ranking": [
+    {
+      "W": 5,
+      "method": "HDBSCAN",
+      "silhouette": 0.6652222553832625,
+      "CH": 3471.058635973354,
+      "stability": 1.0,
+      "n_clusters": 4,
+      "n_windows": 352824,
+      "composite": 1.0706339180087419
+    },
+    {
+      "W": 8,
+      "method": "HDBSCAN",
+      "silhouette": 0.5873987086330812,
+      "CH": 3687.9078293831726,
+      "stability": 1.0,
+      "n_clusters": 3,
+      "n_windows": 351933,
+      "composite": 0.814307517507146
+    },
+    {
+      "W": 3,
+      "method": "HDBSCAN",
+      "silhouette": 0.7383465034108704,
+      "CH": 3040.108431188198,
+      "stability": 0.5,
+      "n_clusters": 6,
+      "n_windows": 353301,
+      "composite": 0.7183779772533581
+    },
+    {
+      "W": 15,
+      "method": "HDBSCAN",
+      "silhouette": 0.49152392618645024,
+      "CH": 3363.2225213471247,
+      "stability": 1.0,
+      "n_clusters": 3,
+      "n_windows": 350088,
+      "composite": 0.6813968472277853
+    },
+    {
+      "W": 10,
+      "method": "HDBSCAN",
+      "silhouette": 0.5451768557488905,
+      "CH": 2847.0576435853345,
+      "stability": 0.75,
+      "n_clusters": 4,
+      "n_windows": 351456,
+      "composite": 0.6580712254679107
+    },
+    {
+      "W": 30,
+      "method": "HDBSCAN",
+      "silhouette": 0.3961826684248096,
+      "CH": 3353.8852709119024,
+      "stability": 1.0,
+      "n_clusters": 3,
+      "n_windows": 345984,
+      "composite": 0.5492257992107449
+    },
+    {
+      "W": 13,
+      "method": "HDBSCAN",
+      "silhouette": 0.5046007213169265,
+      "CH": 2755.3099274897504,
+      "stability": 0.6,
+      "n_clusters": 5,
+      "n_windows": 350565,
+      "composite": 0.5424738723593459
+    },
+    {
+      "W": 20,
+      "method": "HDBSCAN",
+      "silhouette": 0.4532422241775257,
+      "CH": 2912.3761904525086,
+      "stability": 0.6,
+      "n_clusters": 5,
+      "n_windows": 348720,
+      "composite": 0.48726062821443994
+    },
+    {
+      "W": 45,
+      "method": "HDBSCAN",
+      "silhouette": 0.3240924379808791,
+      "CH": 5231.1375419320175,
+      "stability": 1.0,
+      "n_clusters": 2,
+      "n_windows": 342028,
+      "composite": 0.35605193503020105
+    },
+    {
+      "W": 60,
+      "method": "KMeans(k=2)",
+      "silhouette": 0.27928750259755886,
+      "CH": 9438.876065011273,
+      "stability": 1.0,
+      "n_clusters": 2,
+      "n_windows": 338146,
+      "composite": 0.3068286824251048
+    },
+    {
+      "W": 90,
+      "method": "KMeans(k=2)",
+      "silhouette": 0.2568070779338026,
+      "CH": 9539.868987043132,
+      "stability": 1.0,
+      "n_clusters": 2,
+      "n_windows": 330382,
+      "composite": 0.2821314116350245
+    },
+    {
+      "W": 120,
+      "method": "KMeans(k=2)",
+      "silhouette": 0.23576419458316877,
+      "CH": 9718.066522476687,
+      "stability": 1.0,
+      "n_clusters": 2,
+      "n_windows": 322618,
+      "composite": 0.2590134413970086
+    }
+  ],
+  "optimal_Ws": [
+    5,
+    8,
+    3,
+    15,
+    10
+  ],
+  "results": {
+    "3": {
+      "n_windows": 353301,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.7383465034108704,
+      "calinski_harabasz": 3040.108431188198,
+      "stability_score": 0.5,
+      "stability_detail": {
+        "0": {
+          "periods_present": 3,
+          "counts_per_period": [
+            453,
+            577,
+            0,
+            0,
+            710
+          ],
+          "stable": false
+        },
+        "1": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            3,
+            131,
+            127,
+            115
+          ],
+          "stable": false
+        },
+        "2": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            67,
+            141,
+            132,
+            102
+          ],
+          "stable": true
+        },
+        "3": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            9,
+            139,
+            130,
+            118
+          ],
+          "stable": false
+        },
+        "4": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            38,
+            122,
+            105,
+            87
+          ],
+          "stable": true
+        },
+        "5": {
+          "periods_present": 5,
+          "counts_per_period": [
+            70458,
+            69165,
+            70043,
+            69943,
+            68855
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 6,
+      "cluster_sizes": {
+        "-1": 1530,
+        "0": 1740,
+        "1": 376,
+        "2": 442,
+        "3": 396,
+        "4": 352,
+        "5": 348465
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "elapsed_seconds": 534.6250214576721
+    },
+    "5": {
+      "n_windows": 352824,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.6652222553832625,
+      "calinski_harabasz": 3471.058635973354,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            529,
+            575,
+            521,
+            751,
+            753
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            37,
+            131,
+            89,
+            157
+          ],
+          "stable": true
+        },
+        "2": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            92,
+            327,
+            311,
+            264
+          ],
+          "stable": true
+        },
+        "3": {
+          "periods_present": 5,
+          "counts_per_period": [
+            70337,
+            69008,
+            69082,
+            68654,
+            68551
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 4,
+      "cluster_sizes": {
+        "-1": 2654,
+        "0": 3129,
+        "1": 414,
+        "2": 994,
+        "3": 345633
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "elapsed_seconds": 538.795250415802
+    },
+    "8": {
+      "n_windows": 351933,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.5873987086330812,
+      "calinski_harabasz": 3687.9078293831726,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            1222,
+            1331,
+            753,
+            745,
+            1453
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 5,
+          "counts_per_period": [
+            69251,
+            67773,
+            68395,
+            68196,
+            67035
+          ],
+          "stable": true
+        },
+        "2": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            34,
+            275,
+            310,
+            271
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 3,
+      "cluster_sizes": {
+        "-1": 4888,
+        "0": 5504,
+        "1": 340651,
+        "2": 890
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2
+      ],
+      "elapsed_seconds": 548.23694896698
+    },
+    "10": {
+      "n_windows": 351456,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.5451768557488905,
+      "calinski_harabasz": 2847.0576435853345,
+      "stability_score": 0.75,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            1296,
+            1325,
+            1269,
+            1493,
+            1494
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            1,
+            149,
+            112,
+            179
+          ],
+          "stable": false
+        },
+        "2": {
+          "periods_present": 5,
+          "counts_per_period": [
+            69044,
+            67499,
+            67520,
+            66853,
+            66480
+          ],
+          "stable": true
+        },
+        "3": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            18,
+            161,
+            184,
+            117
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 4,
+      "cluster_sizes": {
+        "-1": 6261,
+        "0": 6877,
+        "1": 441,
+        "2": 337397,
+        "3": 480
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "elapsed_seconds": 549.5654468536377
+    },
+    "13": {
+      "n_windows": 350565,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.5046007213169265,
+      "calinski_harabasz": 2755.3099274897504,
+      "stability_score": 0.6,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            1992,
+            2074,
+            1501,
+            1486,
+            2184
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            0,
+            168,
+            118,
+            192
+          ],
+          "stable": false
+        },
+        "2": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            0,
+            119,
+            110,
+            134
+          ],
+          "stable": false
+        },
+        "3": {
+          "periods_present": 5,
+          "counts_per_period": [
+            67965,
+            66286,
+            67086,
+            66632,
+            65192
+          ],
+          "stable": true
+        },
+        "4": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            43,
+            178,
+            208,
+            134
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 5,
+      "cluster_sizes": {
+        "-1": 6762,
+        "0": 9237,
+        "1": 478,
+        "2": 363,
+        "3": 333162,
+        "4": 563
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 501.07816457748413
+    },
+    "15": {
+      "n_windows": 350088,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.49152392618645024,
+      "calinski_harabasz": 3363.2225213471247,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            2065,
+            2071,
+            2017,
+            2232,
+            2217
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            56,
+            273,
+            327,
+            219
+          ],
+          "stable": true
+        },
+        "2": {
+          "periods_present": 5,
+          "counts_per_period": [
+            67890,
+            66319,
+            66302,
+            65556,
+            65120
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 3,
+      "cluster_sizes": {
+        "-1": 7423,
+        "0": 10602,
+        "1": 875,
+        "2": 331188
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2
+      ],
+      "elapsed_seconds": 502.1894884109497
+    },
+    "20": {
+      "n_windows": 348720,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.4532422241775257,
+      "calinski_harabasz": 2912.3761904525086,
+      "stability_score": 0.6,
+      "stability_detail": {
+        "0": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            0,
+            186,
+            154,
+            163
+          ],
+          "stable": false
+        },
+        "1": {
+          "periods_present": 3,
+          "counts_per_period": [
+            0,
+            0,
+            158,
+            113,
+            177
+          ],
+          "stable": false
+        },
+        "2": {
+          "periods_present": 5,
+          "counts_per_period": [
+            2825,
+            2814,
+            2763,
+            2967,
+            2937
+          ],
+          "stable": true
+        },
+        "3": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            138,
+            315,
+            404,
+            234
+          ],
+          "stable": true
+        },
+        "4": {
+          "periods_present": 5,
+          "counts_per_period": [
+            66707,
+            65141,
+            65128,
+            64291,
+            63803
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 5,
+      "cluster_sizes": {
+        "-1": 7301,
+        "0": 503,
+        "1": 448,
+        "2": 14306,
+        "3": 1091,
+        "4": 325071
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 482.21091890335083
+    },
+    "30": {
+      "n_windows": 345984,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.3961826684248096,
+      "calinski_harabasz": 3353.8852709119024,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            4191,
+            4283,
+            4240,
+            4413,
+            4342
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 4,
+          "counts_per_period": [
+            0,
+            79,
+            360,
+            427,
+            243
+          ],
+          "stable": true
+        },
+        "2": {
+          "periods_present": 5,
+          "counts_per_period": [
+            64259,
+            62545,
+            62757,
+            61517,
+            60598
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 3,
+      "cluster_sizes": {
+        "-1": 11729,
+        "0": 21469,
+        "1": 1109,
+        "2": 311677
+      },
+      "valid_clusters": [
+        0,
+        1,
+        2
+      ],
+      "elapsed_seconds": 463.0860426425934
+    },
+    "45": {
+      "n_windows": 342028,
+      "best_method": "HDBSCAN",
+      "silhouette": 0.3240924379808791,
+      "calinski_harabasz": 5231.1375419320175,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            6207,
+            6515,
+            6454,
+            6574,
+            6443
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 5,
+          "counts_per_period": [
+            61985,
+            61068,
+            61380,
+            60856,
+            60384
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 2,
+      "cluster_sizes": {
+        "-1": 4161,
+        "0": 32193,
+        "1": 305674
+      },
+      "valid_clusters": [
+        0,
+        1
+      ],
+      "elapsed_seconds": 453.858421087265
+    },
+    "60": {
+      "n_windows": 338146,
+      "best_method": "KMeans(k=2)",
+      "silhouette": 0.27928750259755886,
+      "calinski_harabasz": 9438.876065011273,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            53272,
+            47546,
+            52585,
+            45585,
+            42457
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 5,
+          "counts_per_period": [
+            14345,
+            19982,
+            15274,
+            22024,
+            25075
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 2,
+      "cluster_sizes": {
+        "0": 241445,
+        "1": 96701
+      },
+      "valid_clusters": [
+        0,
+        1
+      ],
+      "elapsed_seconds": 258.62750911712646
+    },
+    "90": {
+      "n_windows": 330382,
+      "best_method": "KMeans(k=2)",
+      "silhouette": 0.2568070779338026,
+      "calinski_harabasz": 9539.868987043132,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            15119,
+            21110,
+            16443,
+            23173,
+            25952
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 5,
+          "counts_per_period": [
+            50938,
+            44876,
+            49864,
+            42887,
+            40019
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 2,
+      "cluster_sizes": {
+        "0": 101798,
+        "1": 228584
+      },
+      "valid_clusters": [
+        0,
+        1
+      ],
+      "elapsed_seconds": 267.99783086776733
+    },
+    "120": {
+      "n_windows": 322618,
+      "best_method": "KMeans(k=2)",
+      "silhouette": 0.23576419458316877,
+      "calinski_harabasz": 9718.066522476687,
+      "stability_score": 1.0,
+      "stability_detail": {
+        "0": {
+          "periods_present": 5,
+          "counts_per_period": [
+            15321,
+            21500,
+            16681,
+            23431,
+            26491
+          ],
+          "stable": true
+        },
+        "1": {
+          "periods_present": 5,
+          "counts_per_period": [
+            49176,
+            42944,
+            48053,
+            41072,
+            37948
+          ],
+          "stable": true
+        }
+      },
+      "n_clusters_valid": 2,
+      "cluster_sizes": {
+        "0": 103425,
+        "1": 219193
+      },
+      "valid_clusters": [
+        0,
+        1
+      ],
+      "elapsed_seconds": 259.98038387298584
+    }
+  }
+}
