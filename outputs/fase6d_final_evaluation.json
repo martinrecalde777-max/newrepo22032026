@@ -1,0 +1,39 @@
+{
+  "pipeline": "MNQ Morphology Discovery",
+  "verdict": "NO BUILD BOT",
+  "reason": "Edge too small after removing look-ahead bias and trade redundancy",
+  "degradation": {
+    "W3_momentum": {
+      "original_pts": 37.8,
+      "clean_pts": 23.3,
+      "independent_pts": 8.6,
+      "total_degradation_pct": 77,
+      "annual_pnl_1contract": 3880,
+      "sharpe_final": 2.57,
+      "verdict": "Small but real edge \u2014 not enough for automated trading"
+    },
+    "W3_fade_C1": {
+      "original_pts": 41.7,
+      "clean_pts": 13.7,
+      "independent_pts": 2.5,
+      "total_degradation_pct": 94,
+      "annual_pnl_1contract": 919,
+      "sharpe_final": 0.62,
+      "verdict": "Marginal edge \u2014 not tradeable"
+    },
+    "W8_fadeC2": {
+      "original_pts": 19.1,
+      "clean_pts": -0.2,
+      "total_degradation_pct": 100,
+      "verdict": "Pure look-ahead bias \u2014 no real edge"
+    }
+  },
+  "recommendations": [
+    "Pipeline methodology is sound \u2014 apply to richer features",
+    "Try 5min/15min bars to reduce noise",
+    "Add order flow / depth features",
+    "Try HMM or autoencoders instead of KMeans",
+    "Combine morphology with regime filters (VIX, volume profile, session)",
+    "Consider multi-instrument approach for diversification"
+  ]
+}

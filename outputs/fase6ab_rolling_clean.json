@@ -1,0 +1,286 @@
+{
+  "W3_momentum": {
+    "summary": {
+      "n_trades": 3033,
+      "total_pnl": 137835.58,
+      "avg_pnl": 45.44529508737224,
+      "avg_pts": 23.34264754368612,
+      "win_rate": 0.34718100890207715,
+      "sharpe": 4.733159212858925,
+      "max_dd": -1662.8199999993521,
+      "profitable_periods": 3,
+      "total_periods": 5
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "start": "2022-11-07",
+        "end": "2023-09-07",
+        "n_train_windows": 588390,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 1,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 2,
+        "start": "2023-09-07",
+        "end": "2024-07-09",
+        "n_train_windows": 882660,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 1,
+        "n_trades": 2091,
+        "total_pnl": 61795.15999999999,
+        "avg_pnl": 29.552922046867522,
+        "win_rate": 0.3452893352462936
+      },
+      {
+        "period": 3,
+        "start": "2024-07-09",
+        "end": "2025-05-09",
+        "n_train_windows": 1176930,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 3,
+        "n_trades": 530,
+        "total_pnl": 42328.299999999996,
+        "avg_pnl": 79.86471698113206,
+        "win_rate": 0.33773584905660375
+      },
+      {
+        "period": 4,
+        "start": "2025-05-09",
+        "end": "2026-03-10",
+        "n_train_windows": 1471200,
+        "n_forward_windows": 294266,
+        "n_signal_clusters": 1,
+        "n_trades": 412,
+        "total_pnl": 33712.12,
+        "avg_pnl": 81.82553398058253,
+        "win_rate": 0.36893203883495146
+      },
+      {
+        "period": 5,
+        "start": "2026-03-10",
+        "end": "2026-03-11",
+        "n_train_windows": 1765466,
+        "n_forward_windows": 1264,
+        "n_signal_clusters": 1,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      }
+    ],
+    "n_trades_detail": 3033
+  },
+  "W3_fade_C1": {
+    "summary": {
+      "n_trades": 3033,
+      "total_pnl": 79422.57999999999,
+      "avg_pnl": 26.18614573030003,
+      "avg_pts": 13.713072865150014,
+      "win_rate": 0.37817342565117046,
+      "sharpe": 2.82053694822302,
+      "max_dd": -3105.360000000228,
+      "profitable_periods": 3,
+      "total_periods": 5
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "start": "2022-11-07",
+        "end": "2023-09-07",
+        "n_train_windows": 588390,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 1,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 2,
+        "start": "2023-09-07",
+        "end": "2024-07-09",
+        "n_train_windows": 882660,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 1,
+        "n_trades": 2091,
+        "total_pnl": 31522.65999999999,
+        "avg_pnl": 15.075399330463888,
+        "win_rate": 0.39263510282161646
+      },
+      {
+        "period": 3,
+        "start": "2024-07-09",
+        "end": "2025-05-09",
+        "n_train_windows": 1176930,
+        "n_forward_windows": 294270,
+        "n_signal_clusters": 3,
+        "n_trades": 530,
+        "total_pnl": 25465.299999999996,
+        "avg_pnl": 48.04773584905659,
+        "win_rate": 0.360377358490566
+      },
+      {
+        "period": 4,
+        "start": "2025-05-09",
+        "end": "2026-03-10",
+        "n_train_windows": 1471200,
+        "n_forward_windows": 294266,
+        "n_signal_clusters": 1,
+        "n_trades": 412,
+        "total_pnl": 22434.62,
+        "avg_pnl": 54.45296116504854,
+        "win_rate": 0.3276699029126214
+      },
+      {
+        "period": 5,
+        "start": "2026-03-10",
+        "end": "2026-03-11",
+        "n_train_windows": 1765466,
+        "n_forward_windows": 1264,
+        "n_signal_clusters": 1,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      }
+    ],
+    "n_trades_detail": 3033
+  },
+  "W8_fadeC2": {
+    "summary": {
+      "n_trades": 125533,
+      "total_pnl": -202569.41999999998,
+      "avg_pnl": -1.6136746512869125,
+      "avg_pts": -0.18683732564345623,
+      "win_rate": 0.38208279894529723,
+      "sharpe": -1.0914154148076443,
+      "max_dd": -209553.59999982195,
+      "profitable_periods": 1,
+      "total_periods": 5
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "start": "2022-11-07",
+        "end": "2023-09-07",
+        "n_train_windows": 585865,
+        "n_forward_windows": 293195,
+        "n_signal_clusters": 3,
+        "n_trades": 9170,
+        "total_pnl": 2639.699999999998,
+        "avg_pnl": 0.2878625954198471,
+        "win_rate": 0.41613958560523445
+      },
+      {
+        "period": 2,
+        "start": "2023-09-07",
+        "end": "2024-07-09",
+        "n_train_windows": 879060,
+        "n_forward_windows": 293195,
+        "n_signal_clusters": 2,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 3,
+        "start": "2024-07-09",
+        "end": "2025-05-09",
+        "n_train_windows": 1172255,
+        "n_forward_windows": 293195,
+        "n_signal_clusters": 3,
+        "n_trades": 116363,
+        "total_pnl": -205209.12,
+        "avg_pnl": -1.7635255192801835,
+        "win_rate": 0.3793989498380069
+      },
+      {
+        "period": 4,
+        "start": "2025-05-09",
+        "end": "2026-03-10",
+        "n_train_windows": 1465450,
+        "n_forward_windows": 293181,
+        "n_signal_clusters": 1,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 5,
+        "start": "2026-03-10",
+        "end": "2026-03-11",
+        "n_train_windows": 1758631,
+        "n_forward_windows": 1259,
+        "n_signal_clusters": 0,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "avg_pnl": 0.0,
+        "win_rate": 0.0
+      }
+    ],
+    "n_trades_detail": 125533
+  },
+  "W8_fadeC2_fade_down": {
+    "summary": {
+      "n_trades": 54296,
+      "total_pnl": -108053.54000000001,
+      "avg_pnl": -1.9900828790334464,
+      "avg_pts": -0.3750414395167232,
+      "win_rate": 0.40756225136289964,
+      "sharpe": -1.702871220862833,
+      "max_dd": -108222.64000008635,
+      "profitable_periods": 0,
+      "total_periods": 5
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "start": "2022-11-07",
+        "end": "2023-09-07",
+        "n_trades": 54296,
+        "total_pnl": -108053.54000008634,
+        "win_rate": 0.40756225136289964
+      },
+      {
+        "period": 2,
+        "start": "2023-09-07",
+        "end": "2024-07-09",
+        "n_trades": 0,
+        "total_pnl": 0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 3,
+        "start": "2024-07-09",
+        "end": "2025-05-09",
+        "n_trades": 0,
+        "total_pnl": 0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 4,
+        "start": "2025-05-09",
+        "end": "2026-03-10",
+        "n_trades": 0,
+        "total_pnl": 0,
+        "win_rate": 0.0
+      },
+      {
+        "period": 5,
+        "start": "2026-03-10",
+        "end": "2026-03-11",
+        "n_trades": 0,
+        "total_pnl": 0,
+        "win_rate": 0.0
+      }
+    ],
+    "n_trades_detail": 54296
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "W3_momentum": {
+    "n_trades": 3033,
+    "n_events": 728,
+    "trades_per_event_avg": 4.166208791208791,
+    "trades_per_event_median": 2.0,
+    "overlap_pct": 15.204485488126648,
+    "autocorr_lag1": 0.11597563082275221,
+    "avg_same_direction": 1.0,
+    "per_trade": {
+      "total_pnl": 137835.58,
+      "avg_pnl": 45.44529508737224,
+      "avg_pts": 23.34264754368612,
+      "win_rate": 0.34718100890207715,
+      "sharpe": 4.733159212858925
+    },
+    "per_event": {
+      "total_pnl": 137835.58,
+      "avg_pnl": 189.3345879120879,
+      "avg_pts": 95.28729395604395,
+      "win_rate": 0.45879120879120877,
+      "sharpe": 3.180497501834351,
+      "max_dd": -1648.619999999988
+    },
+    "first_trade_only": {
+      "total_pnl": 11638.779999999999,
+      "avg_pnl": 15.987335164835164,
+      "avg_pts": 8.613667582417582,
+      "win_rate": 0.3434065934065934,
+      "sharpe": 2.5745490731265472
+    }
+  },
+  "W3_fade_C1": {
+    "n_trades": 3033,
+    "n_events": 728,
+    "trades_per_event_avg": 4.166208791208791,
+    "trades_per_event_median": 2.0,
+    "overlap_pct": 39.31398416886543,
+    "autocorr_lag1": 0.046213583709101565,
+    "avg_same_direction": 1.0,
+    "per_trade": {
+      "total_pnl": 79422.57999999999,
+      "avg_pnl": 26.18614573030003,
+      "avg_pts": 13.713072865150014,
+      "win_rate": 0.37817342565117046,
+      "sharpe": 2.82053694822302
+    },
+    "per_event": {
+      "total_pnl": 79422.58000000002,
+      "avg_pnl": 109.09695054945057,
+      "avg_pts": 55.16847527472528,
+      "win_rate": 0.4107142857142857,
+      "sharpe": 2.542141790227885,
+      "max_dd": -2984.600000000026
+    },
+    "first_trade_only": {
+      "total_pnl": 2756.279999999999,
+      "avg_pnl": 3.7860989010988995,
+      "avg_pts": 2.51304945054945,
+      "win_rate": 0.4065934065934066,
+      "sharpe": 0.6209569502609188
+    }
+  }
+}
