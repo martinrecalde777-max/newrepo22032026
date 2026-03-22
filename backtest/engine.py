@@ -37,6 +37,8 @@ class Trade:
     exit_reason: str
     signal_confidence: float
     signal_ev: float
+    prob_big_move: float = 0.0       # Magnitude classifier probability
+    regime_active: bool = True        # Whether regime filter was active at entry
 
 
 @dataclass
@@ -53,6 +55,8 @@ class Position:
     best_price: float = 0.0
     signal_confidence: float = 0.0
     signal_ev: float = 0.0
+    prob_big_move: float = 0.0
+    regime_active: bool = True
 
 
 class BacktestEngine:
@@ -173,6 +177,8 @@ class BacktestEngine:
                             best_price=current_price,
                             signal_confidence=signal.get('confidence', 0),
                             signal_ev=signal.get('expected_value', 0),
+                            prob_big_move=signal.get('prob_big_move', 0),
+                            regime_active=signal.get('regime_active', True),
                         )
 
             # Check max drawdown halt
@@ -295,6 +301,8 @@ class BacktestEngine:
             'exit_reason': t.exit_reason,
             'confidence': t.signal_confidence,
             'signal_ev': t.signal_ev,
+            'prob_big_move': t.prob_big_move,
+            'regime_active': t.regime_active,
         } for t in self.trades])
 
         pnl = trades_df['pnl_net'].values

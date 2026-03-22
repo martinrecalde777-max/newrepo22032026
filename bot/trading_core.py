@@ -239,13 +239,29 @@ class TradingDatabase:
 
 
 class RealTimeFeatureEngine:
-    """Compute features from a rolling window of bars for real-time use."""
+    """Compute features from a rolling window of bars for real-time use.
+    Includes order flow proxies and cross-asset features."""
 
     def __init__(self, groupings: List[int], feature_names: List[str]):
         self.groupings = groupings
         self.feature_names = feature_names
-        self.max_lookback = max(groupings) + 10
+        self.max_lookback = max(max(groupings) + 10, 600)  # At least 600 for cross-asset
         self.bar_buffer = []
+        # Lazy-load feature engines
+        self._of_engine = None
+        self._ca_engine = None
+
+    def _get_of_engine(self):
+        if self._of_engine is None:
+            from core.order_flow_features import OrderFlowProxy
+            self._of_engine = OrderFlowProxy()
+        return self._of_engine
+
+    def _get_ca_engine(self):
+        if self._ca_engine is None:
+            from core.cross_asset_features import CrossAssetFeatureProvider
+            self._ca_engine = CrossAssetFeatureProvider(mode='simulate')
+        return self._ca_engine
 
     def update(self, bar: Dict):
         """Add a new bar to the buffer."""
@@ -255,7 +271,7 @@ class RealTimeFeatureEngine:
 
     def compute_features(self) -> Optional[np.ndarray]:
         """Compute current feature vector from bar buffer."""
-        if len(self.bar_buffer) < self.max_lookback:
+        if len(self.bar_buffer) < max(self.groupings):
             return None
 
         df = pd.DataFrame(self.bar_buffer[-self.max_lookback:])
@@ -326,20 +342,51 @@ class RealTimeFeatureEngine:
         features['volatility_60'] = df['return_log'].rolling(60).std().iloc[-1]
         vol_ma = volume.rolling(20).mean().iloc[-1]
         features['volume_ratio'] = volume.iloc[-1] / vol_ma if vol_ma > 0 else 1
-        # Time features would come from actual timestamp
-        features['hour'] = 0
-        features['day_of_week'] = 0
+        # Time features from actual timestamp
+        if 'timestamp' in df.columns:
+            features['hour'] = pd.to_datetime(df['timestamp'].iloc[-1]).hour
+            features['day_of_week'] = pd.to_datetime(df['timestamp'].iloc[-1]).weekday()
+        else:
+            features['hour'] = 0
+            features['day_of_week'] = 0
         features['momentum_5'] = close.iloc[-1] - close.iloc[-5]
         features['momentum_20'] = close.iloc[-1] - close.iloc[-20]
 
-        # Morphology encodings (placeholder)
+        # Morphology encodings
         for g in self.groupings:
-            features[f'morph_{g}_encoded'] = 0
+            if len(df) >= g:
+                net_ret = close.iloc[-1] - close.iloc[-g]
+                grp_range_v = high.rolling(g).max().iloc[-1] - low.rolling(g).min().iloc[-1]
+                eff = abs(net_ret) / grp_range_v if grp_range_v > 0 else 0
+                cp = (close.iloc[-1] - low.rolling(g).min().iloc[-1]) / grp_range_v if grp_range_v > 0 else 0.5
+                morph = 0
+                if net_ret > 0 and eff > 0.6:
+                    morph = 1
+                elif net_ret < 0 and eff > 0.6:
+                    morph = 2
+                elif cp > 0.8 and net_ret > 0:
+                    morph = 3
+                elif cp < 0.2 and net_ret < 0:
+                    morph = 4
+                features[f'morph_{g}_encoded'] = morph
+            else:
+                features[f'morph_{g}_encoded'] = 0
+
+        # === IMPROVEMENT 1: Order Flow Proxy Features ===
+        of_feats = self._get_of_engine().compute_single_bar(self.bar_buffer)
+        features.update(of_feats)
+
+        # === IMPROVEMENT 2: Cross-Asset Features ===
+        ca_feats = self._get_ca_engine().compute_single_bar(self.bar_buffer)
+        features.update(ca_feats)
 
         # Build feature vector in correct order
         feature_vector = []
         for name in self.feature_names:
-            feature_vector.append(features.get(name, 0))
+            val = features.get(name, 0)
+            if val is None or (isinstance(val, float) and np.isnan(val)):
+                val = 0
+            feature_vector.append(val)
 
         return np.array(feature_vector).reshape(1, -1)
 
@@ -347,6 +394,7 @@ class RealTimeFeatureEngine:
 class SignalEngine:
     """
     Generates trading signals by combining ML models with filters.
+    Includes magnitude gate (Improvement 4) and regime filter (Improvement 3).
     Designed for real-time operation.
     """
 
@@ -356,7 +404,15 @@ class SignalEngine:
         self.scaler = None
         self.model_weights = {}
         self.feature_engine = None
+        self.vol_history = pd.Series(dtype=float)  # For regime filter
+        self._regime_filter = None
         self._load_models(model_path)
+
+    def _get_regime_filter(self):
+        if self._regime_filter is None:
+            from core.regime_filter import RegimeFilter
+            self._regime_filter = RegimeFilter(self.config)
+        return self._regime_filter
 
     def _load_models(self, path: str):
         """Load trained models from disk."""
@@ -378,9 +434,11 @@ class SignalEngine:
         if os.path.exists(scaler_path):
             self.scaler = joblib.load(scaler_path)
 
-    def generate_signal(self, features: np.ndarray) -> Dict:
+    def generate_signal(self, features: np.ndarray,
+                        current_bar: Dict = None) -> Dict:
         """
         Generate a trading signal from features.
+        Applies magnitude gate and regime filter.
 
         Returns dict with:
         - direction: 1 (LONG), -1 (SHORT), 0 (FLAT)
@@ -388,9 +446,12 @@ class SignalEngine:
         - expected_return: in points
         - expected_value: EV in points
         - is_valid: whether signal passes all filters
+        - regime_active: whether regime conditions are met
+        - magnitude_gate: whether magnitude classifier predicts big move
         """
         if self.scaler is None or not self.models:
-            return {'direction': 0, 'confidence': 0, 'is_valid': False}
+            return {'direction': 0, 'confidence': 0, 'is_valid': False,
+                    'regime_active': False, 'magnitude_gate': False}
 
         # Handle NaN in features
         features_clean = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
@@ -438,11 +499,40 @@ class SignalEngine:
         costs = (self.config.trading.commission_per_side + self.config.trading.slippage_per_side) * 2
         expected_value = abs(ret_pred) * confidence - costs
 
-        # Validity
+        # === IMPROVEMENT 4: Magnitude gate ===
+        mag_threshold = getattr(self.config.trading, 'magnitude_prob_threshold', 0.5)
+        magnitude_gate = prob_big_move >= mag_threshold
+
+        # === IMPROVEMENT 3: Regime filter ===
+        regime_active = True
+        if getattr(self.config.trading, 'regime_filter_enabled', True) and current_bar:
+            # Get current hour (UTC)
+            ts = current_bar.get('timestamp', '')
+            try:
+                hour_utc = pd.to_datetime(ts).hour
+            except Exception:
+                hour_utc = datetime.now(timezone.utc).hour
+
+            # Update vol history
+            vol_20 = features_clean[0][self._find_feature_idx('volatility_20')] if features_clean.shape[1] > 0 else 0
+            self.vol_history = pd.concat([
+                self.vol_history, pd.Series([vol_20])
+            ]).tail(10000)
+
+            regime_info = self._get_regime_filter().check_current_regime(
+                current_vol_20=vol_20,
+                current_hour_utc=hour_utc,
+                vol_history=self.vol_history,
+            )
+            regime_active = regime_info['regime_active']
+
+        # Combined validity with ALL filters
         is_valid = (
             confidence >= self.config.trading.min_confidence and
             expected_value >= self.config.trading.min_expected_value_points and
-            direction != 0
+            direction != 0 and
+            magnitude_gate and     # IMPROVEMENT 4
+            regime_active          # IMPROVEMENT 3
         )
 
         return {
@@ -453,8 +543,19 @@ class SignalEngine:
             'expected_return': float(ret_pred),
             'expected_value': float(expected_value),
             'is_valid': is_valid,
+            'magnitude_gate': magnitude_gate,
+            'regime_active': regime_active,
             'timestamp': datetime.now(timezone.utc).isoformat(),
         }
+
+    def _find_feature_idx(self, name: str) -> int:
+        """Find index of a feature by name (for real-time feature extraction)."""
+        if self.feature_engine and hasattr(self.feature_engine, 'feature_names'):
+            try:
+                return self.feature_engine.feature_names.index(name)
+            except ValueError:
+                pass
+        return 0
 
 
 class TradingBot:
@@ -483,14 +584,20 @@ class TradingBot:
         else:
             groupings = [25, 30, 45, 60, 90, 120, 180, 240]
 
+        # Try loading feature names from JSON first (faster), fall back to parquet
+        feature_names_path = './data/trained_models/feature_names.json'
         features_path = './data/features_all.parquet'
-        if os.path.exists(features_path):
+        if os.path.exists(feature_names_path):
+            with open(feature_names_path) as f:
+                feature_names = json.load(f)
+        elif os.path.exists(features_path):
             feature_names = pd.read_parquet(features_path, columns=[]).columns.tolist()
         else:
             feature_names = []
 
         if feature_names:
             self.feature_engine = RealTimeFeatureEngine(groupings, feature_names)
+            self.signal_engine.feature_engine = self.feature_engine
 
     def process_bar(self, bar: Dict) -> Optional[Dict]:
         """
@@ -514,8 +621,8 @@ class TradingBot:
         if features is None:
             return None
 
-        # Generate signal
-        signal = self.signal_engine.generate_signal(features)
+        # Generate signal (with regime + magnitude filters)
+        signal = self.signal_engine.generate_signal(features, current_bar=bar)
         signal['timestamp'] = bar.get('timestamp', datetime.now(timezone.utc).isoformat())
 
         # Store signal in database

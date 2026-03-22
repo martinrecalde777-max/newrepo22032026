@@ -189,7 +189,7 @@ def discover_groupings(df: pd.DataFrame, candidate_sizes=None) -> list:
 
 
 def build_features(df: pd.DataFrame, groupings: list) -> pd.DataFrame:
-    """Build complete feature matrix."""
+    """Build complete feature matrix including order flow and cross-asset features."""
     logger.info(f"Building features for groupings: {groupings}")
     features = pd.DataFrame(index=df.index)
 
@@ -262,13 +262,27 @@ def build_features(df: pd.DataFrame, groupings: list) -> pd.DataFrame:
         morph = np.where((np.array(close_pos) < 0.2) & (net_ret < 0), 4, morph)  # Inv-V
         features[f'morph_{size}_encoded'] = morph
 
-    logger.info(f"Total features: {features.shape[1]}")
+    # === IMPROVEMENT 1: Order Flow Proxy Features ===
+    logger.info("Adding order flow proxy features...")
+    from core.order_flow_features import OrderFlowProxy
+    of_engine = OrderFlowProxy()
+    of_features = of_engine.compute_all(df)
+    features = pd.concat([features, of_features], axis=1)
+
+    # === IMPROVEMENT 2: Cross-Asset Features ===
+    logger.info("Adding cross-asset features...")
+    from core.cross_asset_features import CrossAssetFeatureProvider
+    ca_engine = CrossAssetFeatureProvider(mode='simulate')
+    ca_features = ca_engine.compute_features(df)
+    features = pd.concat([features, ca_features], axis=1)
+
+    logger.info(f"Total features (with order flow + cross-asset): {features.shape[1]}")
     features.to_parquet('data/features_all.parquet', index=False)
     return features
 
 
 def train_models(df, features, config_dict):
-    """Train ensemble models."""
+    """Train ensemble models with expanded features (order flow + cross-asset)."""
     import xgboost as xgb
     import lightgbm as lgb
     from sklearn.preprocessing import StandardScaler
@@ -300,6 +314,7 @@ def train_models(df, features, config_dict):
     X_te = scaler.transform(X[val_split:])
 
     logger.info(f"Training: {split:,} | Val: {val_split-split:,} | Test: {n-val_split:,}")
+    logger.info(f"Feature count: {X.shape[1]} (including order flow + cross-asset)")
 
     os.makedirs('data/trained_models', exist_ok=True)
 
@@ -355,6 +370,26 @@ def train_models(df, features, config_dict):
 
     logger.info(f"Test Accuracy - XGB: {test_acc_xgb:.4f} | LGB: {test_acc_lgb:.4f} | Mag: {mag_acc:.4f}")
 
+    # === IMPROVEMENT 3: Compute regime mask for backtest ===
+    logger.info("Computing regime filter mask...")
+    from core.regime_filter import RegimeFilter
+    from config import SystemConfig
+    regime_config = SystemConfig()
+    regime_filter = RegimeFilter(regime_config)
+    regime_mask = regime_filter.compute_regime_mask(
+        df,
+        min_quintile=regime_config.trading.min_volatility_quintile,
+        start_hour=regime_config.trading.session_start_hour_et,
+        end_hour=regime_config.trading.session_end_hour_et,
+    )
+    # Save regime mask aligned to valid indices
+    regime_mask_valid = regime_mask[valid].values
+
+    # === IMPROVEMENT 4: Magnitude filter stats ===
+    mag_probs_test = xgb_mag.predict_proba(X_te)[:, 1]
+    mag_filter_count = (mag_probs_test >= 0.5).sum()
+    logger.info(f"Magnitude filter: {mag_filter_count}/{len(X_te)} test bars predict big move (>= 50pts)")
+
     # Save
     joblib.dump(xgb_dir, 'data/trained_models/xgb_direction.pkl')
     joblib.dump(lgb_dir, 'data/trained_models/lgb_direction.pkl')
@@ -363,8 +398,82 @@ def train_models(df, features, config_dict):
     joblib.dump(xgb_mag, 'data/trained_models/xgb_magnitude.pkl')
     joblib.dump(scaler, 'data/trained_models/scaler.pkl')
 
+    # Save feature names for real-time engine
+    feature_names = features.columns.tolist()
+    with open('data/trained_models/feature_names.json', 'w') as f:
+        json.dump(feature_names, f)
+
     logger.info("Models saved to data/trained_models/")
-    return {'xgb_acc': test_acc_xgb, 'lgb_acc': test_acc_lgb, 'mag_acc': mag_acc}
+
+    # Generate signals with all 4 improvements applied
+    logger.info("Generating signals with regime + magnitude filters...")
+    signals = _generate_filtered_signals(
+        X_te, scaler, xgb_dir, lgb_dir, xgb_ret, lgb_ret, xgb_mag,
+        regime_mask_valid[val_split - (n - len(regime_mask_valid)):] if len(regime_mask_valid) > (n - val_split) else regime_mask_valid[-(n - val_split):],
+        mag_threshold=0.5
+    )
+
+    return {
+        'xgb_acc': test_acc_xgb, 'lgb_acc': test_acc_lgb, 'mag_acc': mag_acc,
+        'feature_count': X.shape[1],
+    }
+
+
+def _generate_filtered_signals(X_test, scaler, xgb_dir, lgb_dir, xgb_ret, lgb_ret,
+                                xgb_mag, regime_mask, mag_threshold=0.5):
+    """Generate signals applying regime filter + magnitude filter."""
+    n = len(X_test)
+
+    # Direction probabilities (ensemble average)
+    prob_up_xgb = xgb_dir.predict_proba(X_test)[:, 1]
+    prob_up_lgb = lgb_dir.predict_proba(X_test)[:, 1]
+    prob_up = (prob_up_xgb + prob_up_lgb) / 2.0
+
+    # Return predictions (ensemble average)
+    ret_xgb = xgb_ret.predict(X_test)
+    ret_lgb = lgb_ret.predict(X_test)
+    ret_pred = (ret_xgb + ret_lgb) / 2.0
+
+    # Magnitude probability
+    prob_big = xgb_mag.predict_proba(X_test)[:, 1]
+
+    # Direction
+    direction = np.where(prob_up > 0.5, 1, -1)
+
+    # Confidence
+    confidence = np.abs(prob_up - 0.5) * 2 * prob_big
+
+    # Expected value
+    costs = (0.52 + 1.0) * 2  # 3.04 points
+    ev = np.abs(ret_pred) * confidence - costs
+
+    # Signal validity with ALL filters
+    signal_valid = (
+        (ev >= 50.0) &
+        (confidence >= 0.60) &
+        (prob_big >= mag_threshold)  # IMPROVEMENT 4: Magnitude gate
+    )
+
+    # IMPROVEMENT 3: Regime filter
+    if regime_mask is not None and len(regime_mask) == n:
+        signal_valid = signal_valid & regime_mask.astype(bool)
+
+    n_valid = signal_valid.sum()
+    logger.info(f"Filtered signals: {n_valid}/{n} valid ({n_valid/n*100:.2f}%)")
+    logger.info(f"  After EV+confidence filter: {((ev >= 50.0) & (confidence >= 0.60)).sum()}")
+    logger.info(f"  After magnitude filter (>={mag_threshold}): {((ev >= 50.0) & (confidence >= 0.60) & (prob_big >= mag_threshold)).sum()}")
+    if regime_mask is not None:
+        logger.info(f"  After regime filter: {n_valid}")
+
+    return {
+        'direction': direction,
+        'prob_up': prob_up,
+        'expected_return': ret_pred,
+        'prob_big_move': prob_big,
+        'confidence': confidence,
+        'expected_value': ev,
+        'signal_valid': signal_valid,
+    }
 
 
 def main():

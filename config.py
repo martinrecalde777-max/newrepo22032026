@@ -96,6 +96,30 @@ class TradingConfig:
     trailing_stop_activation: float = 30.0  # points
     trailing_stop_distance: float = 15.0    # points
 
+    # --- REGIME FILTER (Improvement 3) ---
+    regime_filter_enabled: bool = True
+    min_volatility_quintile: int = 4        # Only Q4-Q5 (top 40% vol)
+    session_start_hour_et: int = 14         # 2:00 PM ET
+    session_end_hour_et: int = 16           # 4:00 PM ET
+    volatility_lookback_bars: int = 5000    # ~2 weeks of 1-min bars
+
+    # --- MAGNITUDE FILTER (Improvement 4) ---
+    use_magnitude_filter: bool = True
+    magnitude_prob_threshold: float = 0.50  # predict_proba >= this to allow entry
+
+@dataclass
+class CrossAssetConfig:
+    """Configuration for cross-asset feature provider."""
+    mode: str = 'simulate'  # 'simulate', 'file', or 'fetch'
+    external_data_path: str = ''
+    cache_path: str = './data/cross_asset_cache.parquet'
+
+@dataclass
+class OrderFlowConfig:
+    """Configuration for order flow proxy features."""
+    enabled: bool = True
+    windows: List[int] = field(default_factory=lambda: [5, 15, 30, 60])
+
 @dataclass
 class BotConfig:
     """Configuration for real-time trading bot."""
@@ -113,6 +137,8 @@ class SystemConfig:
     model: ModelConfig = field(default_factory=ModelConfig)
     trading: TradingConfig = field(default_factory=TradingConfig)
     bot: BotConfig = field(default_factory=BotConfig)
+    cross_asset: CrossAssetConfig = field(default_factory=CrossAssetConfig)
+    order_flow: OrderFlowConfig = field(default_factory=OrderFlowConfig)
     report_path: str = './reports/'
     random_seed: int = 42
     n_jobs: int = -1  # Use all CPU cores

@@ -422,8 +422,12 @@ class EnsemblePredictor:
 
         return results
 
-    def predict(self, features: pd.DataFrame) -> pd.DataFrame:
-        """Full prediction pipeline with game theory and EV filtering."""
+    def predict(self, features: pd.DataFrame,
+                regime_mask: pd.Series = None) -> pd.DataFrame:
+        """
+        Full prediction pipeline with game theory, EV filtering,
+        magnitude gate (Improvement 4), and regime filter (Improvement 3).
+        """
         if not self.is_fitted:
             raise RuntimeError("Model must be fitted before prediction")
 
@@ -437,12 +441,32 @@ class EnsemblePredictor:
             results['expected_return'].abs() * results['confidence'] - costs
         )
 
-        # Filter: only signals with EV >= 50 points
+        # Base filter: EV and confidence
         min_ev = self.config.trading.min_expected_value_points
         results['signal_valid'] = (
             (results['expected_value'] >= min_ev) &
             (results['confidence'] >= self.config.trading.min_confidence)
         )
+
+        # === IMPROVEMENT 4: Magnitude classifier as hard gate ===
+        if getattr(self.config.trading, 'use_magnitude_filter', True):
+            mag_threshold = getattr(self.config.trading, 'magnitude_prob_threshold', 0.5)
+            results['magnitude_gate'] = results['prob_big_move'] >= mag_threshold
+            n_before = results['signal_valid'].sum()
+            results['signal_valid'] = results['signal_valid'] & results['magnitude_gate']
+            n_after = results['signal_valid'].sum()
+            logger.info(f"Magnitude filter (>={mag_threshold}): {n_before} -> {n_after} valid signals")
+
+        # === IMPROVEMENT 3: Regime filter ===
+        if regime_mask is not None:
+            aligned_mask = regime_mask.reindex(results.index, fill_value=False)
+            results['regime_active'] = aligned_mask
+            n_before = results['signal_valid'].sum()
+            results['signal_valid'] = results['signal_valid'] & aligned_mask.astype(bool)
+            n_after = results['signal_valid'].sum()
+            logger.info(f"Regime filter: {n_before} -> {n_after} valid signals")
+        else:
+            results['regime_active'] = True
 
         # Game theory alignment
         if self.game_theory.nash_equilibrium:
