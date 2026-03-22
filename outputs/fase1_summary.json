@@ -1,0 +1,25 @@
+{
+  "total_barras_csv": 2772393,
+  "total_barras_continuo": 1769466,
+  "barras_con_returns": 1769465,
+  "rango_fechas": [
+    "2021-03-12 00:00:00+00:00",
+    "2026-03-11 23:59:00+00:00"
+  ],
+  "contratos_usados": 21,
+  "barras_volumen_cero": 0,
+  "outliers_5sigma": 8601,
+  "barras_invalidas": 0,
+  "returns_log_stats": {
+    "mean": 3.6204913593316077e-07,
+    "std": 0.0008630794170309577,
+    "skew": -0.12671843445093917,
+    "kurtosis": 167.76111787995592
+  },
+  "sesiones": {
+    "Asia": 619959,
+    "London": 580979,
+    "RTH": 494940,
+    "Post-Market": 73588
+  }
+}
