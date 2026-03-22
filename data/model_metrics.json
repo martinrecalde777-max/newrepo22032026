@@ -1,0 +1,42 @@
+{
+  "xgb_direction_accuracy": 0.5307042338451333,
+  "lgb_direction_accuracy": 0.5285786430891919,
+  "ensemble_direction_accuracy": 0.5304328818337366,
+  "xgb_return_rmse": 54.50353616123895,
+  "lgb_return_rmse": 54.50403205520935,
+  "xgb_return_dir_accuracy": 0.5257520596371421,
+  "lgb_return_dir_accuracy": 0.52892537065931,
+  "ensemble_return_dir_accuracy": 0.528186690183841,
+  "magnitude_accuracy": 0.8181828460303462,
+  "valid_signals_pct": 0.0,
+  "n_train": 1238240,
+  "n_val": 265337,
+  "n_test": 265338,
+  "n_features": 145,
+  "model_weights": {
+    "xgb": 0.5010033159235487,
+    "lgb": 0.49899668407645126
+  },
+  "top_features": {
+    "grp_120_volatility": 0.03923154215638836,
+    "grp_240_vol_change": 0.033365959094630346,
+    "grp_240_body": 0.03290656560824977,
+    "grp_60_range_pct": 0.028424861302806272,
+    "grp_90_momentum": 0.02675914770613114,
+    "grp_240_up_pct": 0.02657913642211093,
+    "grp_240_range": 0.022015935803453127,
+    "grp_240_return_pct": 0.021924426375577847,
+    "hour": 0.021448600168029467,
+    "grp_120_vol_total": 0.021264652318010727,
+    "grp_180_vol_change": 0.02119407063970963,
+    "grp_30_vol_mean": 0.021152713398138682,
+    "grp_60_return_pct": 0.019481749936110446,
+    "day_of_week": 0.015857711630976865,
+    "grp_120_vol_change": 0.015642930950141617,
+    "grp_180_momentum": 0.015497565000421471,
+    "grp_240_close_pos": 0.01537847864545054,
+    "grp_90_vol_change": 0.015310236915118165,
+    "grp_240_vol_trend": 0.015307767047650285,
+    "grp_120_vol_mean": 0.015151060382939048
+  }
+}
