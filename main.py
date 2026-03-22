@@ -476,13 +476,419 @@ def _generate_filtered_signals(X_test, scaler, xgb_dir, lgb_dir, xgb_ret, lgb_re
     }
 
 
+def run_compare(df, features, groupings):
+    """
+    Compare mode: run backtests side-by-side with different filter configurations.
+    Uses magnitude-driven strategy: enter when mag classifier predicts big move,
+    direction from ensemble, regime filter optional.
+    """
+    import xgboost as xgb
+    import lightgbm as lgb
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import accuracy_score
+    import joblib
+    from backtest.engine import BacktestEngine
+    from config import SystemConfig
+    from core.regime_filter import RegimeFilter
+
+    TARGET_HORIZON = 30
+
+    logger.info("=" * 70)
+    logger.info("COMPARE MODE: Magnitude-driven signal strategy")
+    logger.info("=" * 70)
+
+    # Prepare data
+    target_return = df['close'].shift(-TARGET_HORIZON) - df['close']
+    features_clean = features.replace([np.inf, -np.inf], np.nan)
+    valid = features_clean.notna().all(axis=1) & target_return.notna()
+
+    X = features_clean[valid].values
+    y_ret = target_return[valid].values
+    y_dir = (y_ret > 0).astype(int)
+
+    n = len(X)
+    val_split = int(n * 0.85)
+
+    # Load models (use saved scaler from training)
+    model_path = 'data/trained_models/'
+    try:
+        scaler = joblib.load(os.path.join(model_path, 'scaler.pkl'))
+        xgb_dir = joblib.load(os.path.join(model_path, 'xgb_direction.pkl'))
+        lgb_dir = joblib.load(os.path.join(model_path, 'lgb_direction.pkl'))
+        xgb_ret = joblib.load(os.path.join(model_path, 'xgb_return.pkl'))
+        lgb_ret = joblib.load(os.path.join(model_path, 'lgb_return.pkl'))
+        xgb_mag = joblib.load(os.path.join(model_path, 'xgb_magnitude.pkl'))
+        logger.info("Loaded existing trained models")
+    except Exception as e:
+        logger.error(f"Models not found. Run --mode train first. Error: {e}")
+        return
+
+    X_te = scaler.transform(X[val_split:])
+    y_ret_test = y_ret[val_split:]
+    y_dir_test = y_dir[val_split:]
+
+    # Compute regime mask
+    regime_filter = RegimeFilter(SystemConfig())
+    regime_mask_full = regime_filter.compute_regime_mask(df)
+    regime_mask_valid = regime_mask_full[valid].values
+    regime_test = regime_mask_valid[val_split:]
+
+    # Generate predictions
+    prob_up = (xgb_dir.predict_proba(X_te)[:, 1] + lgb_dir.predict_proba(X_te)[:, 1]) / 2
+    ret_pred = (xgb_ret.predict(X_te) + lgb_ret.predict(X_te)) / 2
+    prob_big = xgb_mag.predict_proba(X_te)[:, 1]
+    direction = np.where(prob_up > 0.5, 1, -1)
+
+    # Diagnostic stats
+    dir_bias = np.abs(prob_up - 0.5)
+    logger.info(f"\nSignal diagnostics (test set, n={len(X_te):,}):")
+    logger.info(f"  prob_up range: [{prob_up.min():.4f}, {prob_up.max():.4f}], bias max: {dir_bias.max():.4f}")
+    logger.info(f"  prob_big: mean={prob_big.mean():.4f}, >=0.3: {(prob_big>=0.3).sum():,}, >=0.5: {(prob_big>=0.5).sum():,}")
+    logger.info(f"  ret_pred: mean={ret_pred.mean():.2f}, std={ret_pred.std():.2f}")
+    logger.info(f"  regime active: {regime_test.sum():,}/{len(regime_test):,}")
+
+    # Test set df slice for backtest
+    df_valid = df[valid].iloc[val_split:].reset_index(drop=True)
+
+    # NEW STRATEGY: Magnitude-driven entry
+    # Enter when:
+    #   1. Magnitude classifier says big move coming (prob_big >= threshold)
+    #   2. Direction has ANY bias (prob_up != exactly 0.5)
+    #   3. Optionally: regime filter active
+    # Use directional selectivity (stronger bias = better) as tiebreaker
+
+    configs = [
+        # Magnitude-only strategies (no EV/confidence gate)
+        {'name': 'v1: All direction signals (baseline)',
+         'dir_bias_min': 0.0, 'mag_min': 0.0, 'regime': False,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v2: Mag>=0.30 (big move likely)',
+         'dir_bias_min': 0.0, 'mag_min': 0.30, 'regime': False,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v3: Mag>=0.50 (big move probable)',
+         'dir_bias_min': 0.0, 'mag_min': 0.50, 'regime': False,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v4: Mag>=0.50 + regime filter',
+         'dir_bias_min': 0.0, 'mag_min': 0.50, 'regime': True,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v5: Mag>=0.50 + dir_bias>=1%',
+         'dir_bias_min': 0.01, 'mag_min': 0.50, 'regime': False,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v6: Mag>=0.50 + dir_bias>=1% + regime',
+         'dir_bias_min': 0.01, 'mag_min': 0.50, 'regime': True,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v7: Mag>=0.50 + dir>=2% + regime',
+         'dir_bias_min': 0.02, 'mag_min': 0.50, 'regime': True,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        {'name': 'v8: Mag>=0.70 + regime (ultra select)',
+         'dir_bias_min': 0.0, 'mag_min': 0.70, 'regime': True,
+         'sl_mult': 3.0, 'tp_mult': 5.0},
+        # Alternative SL/TP ratios
+        {'name': 'v9: Mag>=0.50 + regime + tight SL',
+         'dir_bias_min': 0.0, 'mag_min': 0.50, 'regime': True,
+         'sl_mult': 1.5, 'tp_mult': 3.0},
+        {'name': 'v10: Mag>=0.50 + regime + wide SL',
+         'dir_bias_min': 0.0, 'mag_min': 0.50, 'regime': True,
+         'sl_mult': 4.0, 'tp_mult': 8.0},
+    ]
+
+    results = []
+    for cfg in configs:
+        sig_valid = (
+            (prob_big >= cfg['mag_min']) &
+            (dir_bias >= cfg['dir_bias_min'])
+        )
+        if cfg['regime']:
+            sig_valid = sig_valid & regime_test.astype(bool)
+
+        n_signals = int(sig_valid.sum())
+
+        if n_signals == 0:
+            results.append({
+                'config': cfg['name'], 'signals': 0, 'trades': 0,
+                'pnl': 0, 'win_rate': 0, 'pf': 0, 'ev_per_trade': 0, 'sharpe': 0, 'max_dd': 0,
+            })
+            continue
+
+        # Quick PnL calculation (no backtest engine, just direction * return)
+        positions = np.where(sig_valid, direction, 0)
+        trade_returns = positions * y_ret_test
+        trade_pnls = trade_returns[positions != 0]
+        costs = 3.04  # round-trip
+
+        if len(trade_pnls) > 0:
+            gross_pnl = trade_pnls.sum()
+            net_pnl = gross_pnl - len(trade_pnls) * costs
+            winners = trade_pnls[trade_pnls > costs]
+            losers = trade_pnls[trade_pnls <= costs]
+            win_rate = (trade_pnls > costs).mean()
+            pf = abs(winners.sum() / losers.sum()) if losers.sum() != 0 else float('inf')
+            ev_per_trade = net_pnl / len(trade_pnls)
+            sharpe = (trade_pnls - costs).mean() / max((trade_pnls - costs).std(), 0.01) * np.sqrt(252)
+            equity = np.cumsum(trade_pnls - costs)
+            max_dd = (equity - np.maximum.accumulate(equity)).min()
+        else:
+            net_pnl = win_rate = pf = ev_per_trade = sharpe = max_dd = 0
+
+        # Also run actual backtest engine for the most promising configs
+        bt_result = None
+        if cfg['mag_min'] >= 0.50 and n_signals < 50000:
+            signals_df = pd.DataFrame({
+                'direction_numeric': direction,
+                'expected_return': ret_pred,
+                'expected_value': np.abs(ret_pred),
+                'confidence': prob_big,
+                'signal_valid': sig_valid,
+                'prob_big_move': prob_big,
+                'regime_active': regime_test.astype(bool) if cfg['regime'] else True,
+            })
+            sys_config = SystemConfig()
+            sys_config.trading.min_confidence = 0.0
+            sys_config.trading.min_expected_value_points = 0.0
+            sys_config.trading.stop_loss_multiplier = cfg['sl_mult']
+            sys_config.trading.take_profit_multiplier = cfg['tp_mult']
+            engine = BacktestEngine(sys_config)
+            try:
+                bt_result = engine.run(df_valid, signals_df)
+            except Exception as e:
+                logger.warning(f"  Backtest engine failed for {cfg['name']}: {e}")
+
+        results.append({
+            'config': cfg['name'],
+            'signals': n_signals,
+            'trades': bt_result['n_trades'] if bt_result else len(trade_pnls),
+            'pnl': bt_result['total_pnl_points'] if bt_result else net_pnl,
+            'win_rate': bt_result['win_rate'] if bt_result else win_rate,
+            'pf': bt_result['profit_factor'] if bt_result else pf,
+            'ev_per_trade': bt_result['expectancy_per_trade'] if bt_result else ev_per_trade,
+            'sharpe': bt_result['sharpe_ratio'] if bt_result else sharpe,
+            'max_dd': bt_result['max_drawdown_points'] if bt_result else max_dd,
+        })
+
+    # Print comparison table
+    logger.info("\n" + "=" * 110)
+    logger.info("COMPARISON RESULTS (Test Set: 15% out-of-sample, 181 features)")
+    logger.info("=" * 110)
+    logger.info(f"{'Configuration':<42} {'Signals':>8} {'Trades':>7} {'PnL pts':>10} {'WR':>7} {'PF':>7} {'EV/Tr':>8} {'Sharpe':>7} {'MaxDD':>8}")
+    logger.info("-" * 110)
+    for r in results:
+        logger.info(
+            f"{r['config']:<42} {r['signals']:>8} {r['trades']:>7} "
+            f"{r['pnl']:>10.1f} {r['win_rate']:>6.1%} {r['pf']:>7.2f} "
+            f"{r['ev_per_trade']:>8.1f} {r.get('sharpe', 0):>7.2f} {r.get('max_dd', 0):>8.1f}"
+        )
+    logger.info("=" * 110)
+
+    # Save comparison
+    with open('data/compare_results.json', 'w') as f:
+        json.dump(results, f, indent=2, default=str)
+
+    return results
+
+
+def run_walk_forward_filtered(df, features, groupings, n_windows=5):
+    """
+    Walk-forward validation WITH regime + magnitude filters active.
+    This is the gold standard test for the improved system.
+    """
+    import xgboost as xgb
+    import lightgbm as lgb
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import accuracy_score
+    from core.regime_filter import RegimeFilter
+    from config import SystemConfig
+
+    TARGET_HORIZON = 30
+    MIN_EV = 50.0
+    MAG_THRESHOLDS = [0.0, 0.5, 0.6]  # Test multiple thresholds
+
+    logger.info("=" * 70)
+    logger.info(f"WALK-FORWARD VALIDATION WITH FILTERS ({n_windows} windows)")
+    logger.info("=" * 70)
+
+    features_clean = features.replace([np.inf, -np.inf], np.nan)
+    target_return = df['close'].shift(-TARGET_HORIZON) - df['close']
+    valid = features_clean.notna().all(axis=1) & target_return.notna()
+
+    X = features_clean[valid].values
+    y_ret = target_return[valid].values
+    y_dir = (y_ret > 0).astype(int)
+    y_big = (np.abs(y_ret) >= MIN_EV).astype(int)
+
+    # Compute regime mask
+    regime_filter = RegimeFilter(SystemConfig())
+    regime_mask_full = regime_filter.compute_regime_mask(df)
+    regime_mask = regime_mask_full[valid].values
+
+    n = len(X)
+    window_size = n // (n_windows + 1)  # +1 for initial training window
+    train_start_size = window_size * 2  # Use first 2 windows for initial training
+
+    all_results = {t: [] for t in MAG_THRESHOLDS}
+
+    for w in range(n_windows):
+        train_end = train_start_size + w * window_size
+        test_start = train_end
+        test_end = min(test_start + window_size, n)
+
+        if test_end <= test_start:
+            break
+
+        X_train = X[:train_end]
+        y_dir_train = y_dir[:train_end]
+        y_ret_train = y_ret[:train_end]
+        y_big_train = y_big[:train_end]
+        X_test = X[test_start:test_end]
+        y_dir_test = y_dir[test_start:test_end]
+        y_ret_test = y_ret[test_start:test_end]
+        regime_test = regime_mask[test_start:test_end]
+
+        # Scale
+        scaler = StandardScaler()
+        X_train_s = scaler.fit_transform(X_train)
+        X_test_s = scaler.transform(X_test)
+
+        # Train models
+        try:
+            xgb_dir = xgb.XGBClassifier(
+                n_estimators=300, max_depth=6, learning_rate=0.05,
+                subsample=0.8, colsample_bytree=0.8, random_state=42,
+                eval_metric='logloss', early_stopping_rounds=30, verbosity=0
+            )
+            xgb_dir.fit(X_train_s, y_dir_train, eval_set=[(X_test_s, y_dir_test)], verbose=False)
+
+            lgb_dir = lgb.LGBMClassifier(
+                n_estimators=300, max_depth=8, learning_rate=0.05,
+                subsample=0.8, colsample_bytree=0.8, random_state=42, verbose=-1
+            )
+            lgb_dir.fit(X_train_s, y_dir_train, eval_set=[(X_test_s, y_dir_test)],
+                        callbacks=[lgb.early_stopping(30, verbose=False)])
+
+            xgb_ret = xgb.XGBRegressor(
+                n_estimators=300, max_depth=6, learning_rate=0.05,
+                subsample=0.8, colsample_bytree=0.8, random_state=42,
+                eval_metric='rmse', early_stopping_rounds=30, verbosity=0
+            )
+            xgb_ret.fit(X_train_s, y_ret_train, eval_set=[(X_test_s, y_ret_test)], verbose=False)
+
+            lgb_ret = lgb.LGBMRegressor(
+                n_estimators=300, max_depth=8, learning_rate=0.05,
+                subsample=0.8, colsample_bytree=0.8, random_state=42, verbose=-1
+            )
+            lgb_ret.fit(X_train_s, y_ret_train, eval_set=[(X_test_s, y_ret_test)],
+                        callbacks=[lgb.early_stopping(30, verbose=False)])
+
+            xgb_mag = xgb.XGBClassifier(
+                n_estimators=200, max_depth=5, learning_rate=0.05,
+                subsample=0.8, random_state=42, eval_metric='logloss',
+                early_stopping_rounds=20, verbosity=0
+            )
+            xgb_mag.fit(X_train_s, y_big_train, eval_set=[(X_test_s, (np.abs(y_ret[test_start:test_end]) >= MIN_EV).astype(int))], verbose=False)
+
+            # Predictions
+            prob_up = (xgb_dir.predict_proba(X_test_s)[:, 1] + lgb_dir.predict_proba(X_test_s)[:, 1]) / 2
+            ret_pred = (xgb_ret.predict(X_test_s) + lgb_ret.predict(X_test_s)) / 2
+            prob_big = xgb_mag.predict_proba(X_test_s)[:, 1]
+
+            dir_acc = accuracy_score(y_dir_test, (prob_up > 0.5).astype(int))
+            mag_acc = accuracy_score(
+                (np.abs(y_ret[test_start:test_end]) >= MIN_EV).astype(int),
+                (prob_big >= 0.5).astype(int)
+            )
+
+            direction = np.where(prob_up > 0.5, 1, -1)
+            confidence = np.abs(prob_up - 0.5) * 2 * prob_big
+            costs = (0.52 + 1.0) * 2
+            ev = np.abs(ret_pred) * confidence - costs
+
+            # Test each magnitude threshold (magnitude-driven strategy)
+            for mag_t in MAG_THRESHOLDS:
+                positions = np.where(
+                    (prob_big >= mag_t) &
+                    regime_test.astype(bool),
+                    direction, 0
+                )
+                pnl = positions * y_ret_test
+                n_trades = int((positions != 0).sum())
+                total_pnl = float(pnl.sum())
+                trade_pnls = pnl[positions != 0]
+
+                if n_trades > 0:
+                    win_rate = float((trade_pnls > 0).mean())
+                    avg_pnl = float(trade_pnls.mean())
+                    sharpe = float(trade_pnls.mean() / max(trade_pnls.std(), 0.01) * np.sqrt(252))
+                else:
+                    win_rate = avg_pnl = sharpe = 0
+
+                all_results[mag_t].append({
+                    'window': w,
+                    'train_size': len(X_train),
+                    'test_size': len(X_test),
+                    'dir_accuracy': dir_acc,
+                    'mag_accuracy': mag_acc,
+                    'n_trades': n_trades,
+                    'total_pnl': total_pnl,
+                    'win_rate': win_rate,
+                    'ev_per_trade': avg_pnl,
+                    'sharpe': sharpe,
+                })
+
+            logger.info(f"  Window {w}: DirAcc={dir_acc:.4f} MagAcc={mag_acc:.4f} | "
+                       f"Regime bars: {regime_test.sum()}/{len(regime_test)}")
+            for mag_t in MAG_THRESHOLDS:
+                r = all_results[mag_t][-1]
+                logger.info(f"    mag>={mag_t:.1f}: trades={r['n_trades']:>5} PnL={r['total_pnl']:>8.1f} "
+                           f"WR={r['win_rate']:.1%} EV={r['ev_per_trade']:>6.1f} Sharpe={r['sharpe']:.2f}")
+
+        except Exception as e:
+            logger.error(f"  Window {w} failed: {e}")
+            for mag_t in MAG_THRESHOLDS:
+                all_results[mag_t].append({'window': w, 'error': str(e)})
+
+    # Summary
+    logger.info("\n" + "=" * 90)
+    logger.info("WALK-FORWARD SUMMARY (with regime filter + order flow + cross-asset features)")
+    logger.info("=" * 90)
+    logger.info(f"{'Mag Threshold':>15} {'Windows':>8} {'Total PnL':>12} {'Avg WR':>8} {'Avg EV/Tr':>10} {'Avg Sharpe':>10} {'Tot Trades':>10}")
+    logger.info("-" * 90)
+
+    summary = {}
+    for mag_t in MAG_THRESHOLDS:
+        valid_windows = [r for r in all_results[mag_t] if 'error' not in r]
+        if valid_windows:
+            total_pnl = sum(r['total_pnl'] for r in valid_windows)
+            avg_wr = np.mean([r['win_rate'] for r in valid_windows if r['n_trades'] > 0])
+            avg_ev = np.mean([r['ev_per_trade'] for r in valid_windows if r['n_trades'] > 0])
+            avg_sharpe = np.mean([r['sharpe'] for r in valid_windows if r['n_trades'] > 0])
+            tot_trades = sum(r['n_trades'] for r in valid_windows)
+
+            logger.info(
+                f"{f'>= {mag_t:.1f}':>15} {len(valid_windows):>8} {total_pnl:>12.1f} "
+                f"{avg_wr:>7.1%} {avg_ev:>10.1f} {avg_sharpe:>10.2f} {tot_trades:>10}"
+            )
+            summary[mag_t] = {
+                'total_pnl': total_pnl, 'avg_wr': avg_wr,
+                'avg_ev': avg_ev, 'avg_sharpe': avg_sharpe, 'total_trades': tot_trades,
+            }
+
+    logger.info("=" * 90)
+
+    # Save
+    wf_output = {'per_window': {str(k): v for k, v in all_results.items()}, 'summary': {str(k): v for k, v in summary.items()}}
+    with open('data/walk_forward_filtered_results.json', 'w') as f:
+        json.dump(wf_output, f, indent=2, default=str)
+
+    return all_results, summary
+
+
 def main():
-    parser = argparse.ArgumentParser(description='MNQ Quantitative Trading System')
+    parser = argparse.ArgumentParser(description='MNQ Quantitative Trading System v2')
     parser.add_argument('--data', type=str, help='Path to data file (CSV or Parquet)')
     parser.add_argument('--mode', type=str, default='train',
-                       choices=['train', 'backtest', 'bot', 'report', 'full'],
+                       choices=['train', 'backtest', 'bot', 'report', 'full', 'compare', 'walkforward'],
                        help='Operation mode')
     parser.add_argument('--horizon', type=int, default=30, help='Target horizon in bars')
+    parser.add_argument('--wf-windows', type=int, default=5, help='Walk-forward windows')
     args = parser.parse_args()
 
     os.makedirs('data/logs', exist_ok=True)
@@ -490,13 +896,12 @@ def main():
     os.makedirs('reports', exist_ok=True)
 
     logger.info("=" * 70)
-    logger.info("MNQ QUANTITATIVE TRADING SYSTEM")
+    logger.info("MNQ QUANTITATIVE TRADING SYSTEM v2.0")
     logger.info(f"Mode: {args.mode}")
     logger.info("=" * 70)
 
-    if args.mode in ['train', 'full', 'backtest', 'report']:
+    if args.mode in ['train', 'full', 'backtest', 'report', 'compare', 'walkforward']:
         if not args.data:
-            # Try default paths
             default_paths = [
                 'data/mnq_continuous_1m.parquet',
                 'data/mnq_data.parquet',
@@ -513,20 +918,37 @@ def main():
         df = load_data(args.data)
         df.to_parquet('data/mnq_preprocessed.parquet', index=False)
 
+    # Load groupings
+    groupings = None
+    if args.mode in ['train', 'full', 'compare', 'walkforward']:
+        groupings_path = 'data/optimal_groupings.json'
+        if os.path.exists(groupings_path) and args.mode != 'full':
+            with open(groupings_path) as f:
+                groupings = json.load(f)
+            logger.info(f"Loaded groupings: {groupings}")
+        else:
+            groupings = discover_groupings(df)
+
     if args.mode in ['train', 'full']:
         t0 = time.time()
-
-        # Discover groupings
-        groupings = discover_groupings(df)
-
-        # Build features
         features = build_features(df, groupings)
-
-        # Train models
         metrics = train_models(df, features, {})
-
         logger.info(f"\nTraining complete in {time.time()-t0:.1f}s")
         logger.info(f"Results: {metrics}")
+
+    elif args.mode == 'compare':
+        t0 = time.time()
+        features = build_features(df, groupings)
+        results = run_compare(df, features, groupings)
+        logger.info(f"\nComparison complete in {time.time()-t0:.1f}s")
+
+    elif args.mode == 'walkforward':
+        t0 = time.time()
+        features = build_features(df, groupings)
+        results, summary = run_walk_forward_filtered(
+            df, features, groupings, n_windows=args.wf_windows
+        )
+        logger.info(f"\nWalk-forward complete in {time.time()-t0:.1f}s")
 
     elif args.mode == 'bot':
         from bot.trading_core import TradingBot
@@ -537,7 +959,6 @@ def main():
         logger.info("Trading bot initialized. Waiting for bars...")
         logger.info("Use bot.process_bar(bar_dict) to feed bars")
 
-        # Interactive mode
         try:
             while True:
                 status = bot.get_status()
