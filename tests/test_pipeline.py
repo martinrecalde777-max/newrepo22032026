@@ -17,6 +17,10 @@ from mnq_morphology.confluence import detect_confluence, confluence_stats, find_
 from mnq_morphology.group_morphology import (
     compute_window_features, classify_shape, group_forward_returns, Shape,
 )
+from mnq_morphology.contextual_morphology import (
+    compute_contextual_features, classify_context, scan_setups,
+    compute_forward_returns as ctx_forward_returns,
+)
 
 DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
 
@@ -444,3 +448,69 @@ class TestGroupMorphology:
         if Shape.MOMENTUM_BURST_DOWN.value in stats.index:
             mean = stats.loc[Shape.MOMENTUM_BURST_DOWN.value, "fwd60_mean"]
             assert mean < 0  # confirmed: -5.84 pts
+
+
+# ============================================================
+# Contextual morphology tests
+# ============================================================
+
+class TestContextualMorphology:
+    def test_features_computed(self, continuous):
+        """Compute features on last 50K bars for speed."""
+        sample = continuous.iloc[-50000:]
+        feats = compute_contextual_features(sample, shape_window=30, context_window=90, step=30)
+        assert len(feats) > 1000
+        assert "slope_s" in feats.columns
+        assert "slope_ctx" in feats.columns
+        assert "vol_ratio_ctx" in feats.columns
+
+    def test_all_14_features_present(self, continuous):
+        sample = continuous.iloc[-10000:]
+        feats = compute_contextual_features(sample, shape_window=20, context_window=60, step=20)
+        expected = [
+            "slope_s", "r2_s", "compression", "close_pos", "vol_profile",
+            "net_move_s", "range_s", "slope_ctx", "r2_ctx", "net_move_ctx",
+            "range_ctx", "vol_ratio_ctx", "vol_mean_s", "vol_mean_ctx",
+        ]
+        for f in expected:
+            assert f in feats.columns, f"Missing: {f}"
+
+    def test_classify_adds_labels(self, continuous):
+        sample = continuous.iloc[-50000:]
+        feats = compute_contextual_features(sample, shape_window=30, context_window=90, step=30)
+        classified = classify_context(feats)
+        assert "ctx_trend" in classified.columns
+        assert "shape_type" in classified.columns
+        assert "vol_regime" in classified.columns
+
+    def test_multiple_shape_types_found(self, continuous):
+        sample = continuous.iloc[-50000:]
+        feats = compute_contextual_features(sample, shape_window=30, context_window=90, step=10)
+        classified = classify_context(feats)
+        unique = classified["shape_type"].nunique()
+        assert unique >= 4
+
+    def test_scan_setups_returns_results(self, continuous):
+        sample = continuous.iloc[-100000:]
+        feats = compute_contextual_features(sample, shape_window=30, context_window=90, step=10)
+        classified = classify_context(feats)
+        fwd = ctx_forward_returns(sample, classified, forward_bars=(30, 60))
+        setups = scan_setups(classified, fwd, min_n=50)
+        assert len(setups) > 0
+        assert "ctx_trend" in setups.columns
+        assert "shape_type" in setups.columns
+        assert "fwd_30_mean" in setups.columns
+
+    def test_strong_ramp_up_after_mild_down_positive(self, continuous):
+        """Key real finding: strong_ramp_up after mild_dn with low vol → positive fwd."""
+        feats = compute_contextual_features(continuous, shape_window=60, context_window=120, step=12)
+        classified = classify_context(feats)
+        fwd = ctx_forward_returns(continuous, classified, forward_bars=(60,))
+        mask = (
+            (classified["ctx_trend"] == "ctx_mild_dn")
+            & (classified["shape_type"] == "strong_ramp_up")
+            & (classified["vol_regime"] == "vol_low")
+        )
+        vals = fwd.loc[mask, "fwd_60"].dropna()
+        if len(vals) >= 30:
+            assert vals.mean() > 0  # confirmed: +21.9 pts
