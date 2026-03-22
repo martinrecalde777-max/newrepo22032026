@@ -57,9 +57,7 @@ def grid_search(
     target_atr_range: tuple[float | None, ...] = (None, 1.0, 2.0, 3.0),
     holding_range: tuple[int, ...] = (30, 60, 120),
     session_combos: tuple[tuple[str, ...], ...] = (
-        ("asia", "london", "ny"),
         ("london", "ny"),
-        ("ny",),
     ),
     mtf_scores: tuple[int, ...] = (0, 1),
     slippage_pts: float = 0.5,

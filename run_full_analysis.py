@@ -143,7 +143,6 @@ opt_results = grid_search(
     target_atr_range=(None, 1.5, 3.0),
     holding_range=(30, 60),
     session_combos=(
-        ("asia", "london", "ny"),
         ("london", "ny"),
     ),
     mtf_scores=(0, 1),
