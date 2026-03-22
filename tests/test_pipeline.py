@@ -12,6 +12,8 @@ from mnq_morphology.loader import load_parquet, build_continuous
 from mnq_morphology.morphology import compute_morphology, TICK
 from mnq_morphology.patterns import detect_patterns, PATTERN_REGISTRY
 from mnq_morphology.aggregator import aggregate
+from mnq_morphology.statistics import compute_forward_returns, pattern_stats, by_session
+from mnq_morphology.confluence import detect_confluence, confluence_stats, find_confluence_events
 
 DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
 
@@ -236,3 +238,122 @@ class TestAggregation:
         pats = detect_patterns(morph)
         assert len(morph) == len(agg)
         assert len(pats) == len(agg)
+
+
+# ============================================================
+# Statistics tests
+# ============================================================
+
+@pytest.fixture(scope="module")
+def full_with_fwd(morphology):
+    """Morphology + patterns + forward returns."""
+    pats = detect_patterns(morphology)
+    full = pd.concat([morphology, pats], axis=1)
+    return compute_forward_returns(full)
+
+
+class TestStatistics:
+    def test_forward_returns_computed(self, full_with_fwd):
+        for h in [1, 5, 20]:
+            assert f"fwd_{h}" in full_with_fwd.columns
+
+    def test_fwd1_mean_near_zero(self, full_with_fwd):
+        """Unconditional 1-bar forward return should be near zero."""
+        mean = full_with_fwd["fwd_1"].mean()
+        assert abs(mean) < 0.5  # less than 0.5 points bias
+
+    def test_pattern_stats_shape(self, full_with_fwd):
+        stats = pattern_stats(full_with_fwd)
+        assert "BASELINE" in stats.index
+        # 17 patterns + BASELINE = 18 rows
+        assert len(stats) == 18
+
+    def test_baseline_edge_is_zero(self, full_with_fwd):
+        stats = pattern_stats(full_with_fwd)
+        assert stats.loc["BASELINE", "fwd1_edge"] == 0.0
+
+    def test_win_rate_bounds(self, full_with_fwd):
+        stats = pattern_stats(full_with_fwd)
+        for h in [1, 5, 20]:
+            wr = stats[f"fwd{h}_win_rate"].dropna()
+            assert (wr >= 0).all()
+            assert (wr <= 1).all()
+
+    def test_big_body_bearish_has_bullish_reversion(self, full_with_fwd):
+        """Real data shows big_body_bearish → positive fwd1 (mean reversion)."""
+        stats = pattern_stats(full_with_fwd)
+        edge = stats.loc["big_body_bearish", "fwd1_edge"]
+        # Confirmed: +0.044 pts edge, p=0.0017
+        assert edge > 0
+
+    def test_three_black_crows_reversal(self, full_with_fwd):
+        """Real data shows three_black_crows → positive fwd1 (reversal)."""
+        stats = pattern_stats(full_with_fwd)
+        edge = stats.loc["three_black_crows", "fwd1_edge"]
+        assert edge > 0
+
+    def test_session_breakdown_has_three_sessions(self, full_with_fwd):
+        sess = by_session(full_with_fwd, horizon=1)
+        sessions = set(sess["session"])
+        assert sessions == {"asia", "london", "ny"}
+
+
+# ============================================================
+# Confluence tests
+# ============================================================
+
+@pytest.fixture(scope="module")
+def confluence_data(continuous):
+    """Confluence on recent 3 months for speed."""
+    recent = continuous.loc["2025-06-01":"2025-09-01"]
+    if len(recent) < 1000:
+        recent = continuous.iloc[-50000:]
+    return recent
+
+
+class TestConfluence:
+    def test_confluence_runs(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min", "15min"))
+        assert len(conf) == len(confluence_data)
+
+    def test_confluence_count_columns(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min",))
+        assert "conf_bullish_count" in conf.columns
+        assert "conf_bearish_count" in conf.columns
+        assert "conf_net" in conf.columns
+        assert "conf_strong_bullish" in conf.columns
+        assert "conf_strong_bearish" in conf.columns
+
+    def test_bullish_count_non_negative(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min",))
+        assert (conf["conf_bullish_count"] >= 0).all()
+        assert (conf["conf_bearish_count"] >= 0).all()
+
+    def test_confluence_net_equals_diff(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min",))
+        expected = conf["conf_bullish_count"] - conf["conf_bearish_count"]
+        assert (conf["conf_net"] == expected).all()
+
+    def test_higher_confluence_is_rarer(self, confluence_data):
+        """More TFs aligned should be less frequent."""
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min", "15min"))
+        counts = conf["conf_bullish_count"].value_counts().sort_index()
+        # Count at level 0 should be > count at level 2
+        if 0 in counts.index and 2 in counts.index:
+            assert counts[0] > counts[2]
+
+    def test_confluence_stats_returns_data(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min", "15min"))
+        morph = compute_morphology(confluence_data)
+        fwd = compute_forward_returns(morph)
+        cstats = confluence_stats(conf, fwd)
+        assert len(cstats) > 0
+        assert "direction" in cstats.columns
+        assert "confluence_level" in cstats.columns
+
+    def test_find_events_returns_signals(self, confluence_data):
+        conf = detect_confluence(confluence_data, higher_timeframes=("5min", "15min"))
+        events = find_confluence_events(conf, min_bullish=2, min_bearish=2)
+        if len(events) > 0:
+            assert "signal" in events.columns
+            assert set(events["signal"].unique()) <= {"BULLISH", "BEARISH"}
