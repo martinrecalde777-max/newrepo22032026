@@ -1,2 +1,4 @@
 data_mnq.csv
 outputs/mnq_clean.parquet
+outputs/*.npz
+outputs/*.pkl
