@@ -11,6 +11,8 @@ Each signal includes:
     - target_distance: based on historical mean forward return
     - holding_bars: expected holding period
     - confidence: sample size / min_n ratio (capped at 1.0)
+    - session: asia / london / ny / off_hours
+    - mtf_confirm: multi-timeframe confirmation score
 """
 
 from __future__ import annotations
@@ -182,6 +184,110 @@ def generate_signals(
     if len(result) > 0:
         result = result.set_index("timestamp").sort_index()
     return result
+
+
+def classify_session(index: pd.DatetimeIndex) -> pd.Series:
+    """Classify each timestamp into a trading session.
+
+    CME MNQ sessions (US/Eastern):
+        Asia:   18:00–02:00 (prior day evening → early morning)
+        London: 02:00–09:30
+        NY:     09:30–16:00
+        Off:    16:00–18:00 (daily maintenance halt)
+    """
+    hour = index.hour
+    minute = index.minute
+    session = pd.Series("off_hours", index=index)
+    session[(hour >= 18) | (hour < 2)] = "asia"
+    session[(hour >= 2) & (hour < 9) | ((hour == 9) & (minute < 30))] = "london"
+    session[((hour == 9) & (minute >= 30)) | ((hour >= 10) & (hour < 16))] = "ny"
+    return session
+
+
+def add_session_filter(
+    signals: pd.DataFrame,
+    allowed_sessions: tuple[str, ...] = ("asia", "london", "ny"),
+) -> pd.DataFrame:
+    """Filter signals to only allowed sessions."""
+    if len(signals) == 0:
+        return signals
+    session = classify_session(signals.index)
+    signals = signals.copy()
+    signals["session"] = session
+    return signals[signals["session"].isin(allowed_sessions)]
+
+
+def precompute_mtf_slopes(
+    df_1min: pd.DataFrame,
+    higher_timeframes: tuple[str, ...] = ("5min", "1h"),
+) -> dict[str, pd.Series]:
+    """Pre-compute higher-TF slopes once, forward-filled to 1-min index.
+
+    Call this once and pass the result to add_mtf_confirmation() to avoid
+    recomputing aggregations on every call.
+    """
+    from mnq_morphology.aggregator import aggregate
+
+    tf_slopes = {}
+    for tf in higher_timeframes:
+        agg = aggregate(df_1min, tf)
+        slope = agg["close"].diff(20) / 20
+        slope_1min = slope.reindex(df_1min.index, method="ffill")
+        tf_slopes[tf] = slope_1min
+    return tf_slopes
+
+
+def add_mtf_confirmation(
+    signals: pd.DataFrame,
+    df_1min: pd.DataFrame,
+    higher_timeframes: tuple[str, ...] = ("5min", "1h"),
+    precomputed_slopes: dict[str, pd.Series] | None = None,
+) -> pd.DataFrame:
+    """Add multi-timeframe trend confirmation score to signals.
+
+    For each signal, checks if higher-TF trend agrees with direction:
+        - Computes slope of close over last N bars at each higher TF
+        - Score +1 if slope agrees with direction, -1 if disagrees, 0 if flat
+        - mtf_score = sum across TFs (range: -len(TFs) to +len(TFs))
+        - mtf_confirm = True if mtf_score > 0
+
+    Pass precomputed_slopes (from precompute_mtf_slopes()) to avoid
+    recomputing aggregations on every call.
+    """
+    if len(signals) == 0:
+        return signals
+
+    signals = signals.copy()
+
+    tf_slopes = precomputed_slopes or precompute_mtf_slopes(df_1min, higher_timeframes)
+
+    scores = []
+    for ts in signals.index:
+        score = 0
+        direction = signals.loc[ts, "direction"]
+        for tf, slope_s in tf_slopes.items():
+            if ts in slope_s.index and not pd.isna(slope_s.loc[ts]):
+                sl = slope_s.loc[ts]
+                if direction == "long" and sl > 0.5:
+                    score += 1
+                elif direction == "long" and sl < -0.5:
+                    score -= 1
+                elif direction == "short" and sl < -0.5:
+                    score += 1
+                elif direction == "short" and sl > 0.5:
+                    score -= 1
+        scores.append(score)
+
+    signals["mtf_score"] = scores
+    signals["mtf_confirm"] = [s > 0 for s in scores]
+    return signals
+
+
+def filter_mtf_confirmed(signals: pd.DataFrame, min_score: int = 1) -> pd.DataFrame:
+    """Keep only signals with multi-timeframe confirmation >= min_score."""
+    if "mtf_score" not in signals.columns:
+        return signals
+    return signals[signals["mtf_score"] >= min_score]
 
 
 def filter_no_overlap(signals: pd.DataFrame, min_gap_bars: int = 60) -> pd.DataFrame:

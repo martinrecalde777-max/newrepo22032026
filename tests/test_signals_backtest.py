@@ -11,11 +11,14 @@ from mnq_morphology.contextual_morphology import (
 )
 from mnq_morphology.signals import (
     compute_atr, build_setup_table, generate_signals, filter_no_overlap,
+    classify_session, add_session_filter, add_mtf_confirmation,
+    filter_mtf_confirmed,
 )
 from mnq_morphology.backtest import (
     run_backtest, trades_to_dataframe, analyze_by_setup, analyze_by_exit,
     MNQ_POINT_VALUE,
 )
+from mnq_morphology.optimizer import grid_search
 
 
 DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
@@ -237,3 +240,137 @@ class TestBacktest:
         high_slip = run_backtest(sample, filtered, slippage_pts=2.0, commission_pts=0.0)
         if low_slip.total_trades > 0 and high_slip.total_trades > 0:
             assert high_slip.net_pnl_dollars < low_slip.net_pnl_dollars
+
+
+# ============================================================
+# Session filter tests
+# ============================================================
+
+class TestSessionFilter:
+    def test_classify_session_values(self, sample):
+        sessions = classify_session(sample.index)
+        valid = {"asia", "london", "ny", "off_hours"}
+        assert set(sessions.unique()) <= valid
+
+    def test_all_sessions_present(self, sample):
+        sessions = classify_session(sample.index)
+        assert "asia" in sessions.values
+        assert "london" in sessions.values
+        assert "ny" in sessions.values
+
+    def test_ny_is_930_to_1600(self, sample):
+        sessions = classify_session(sample.index)
+        ny_bars = sample.index[sessions == "ny"]
+        if len(ny_bars) > 0:
+            hours = ny_bars.hour
+            # NY starts at 9:30, so hour 9 with min >= 30, or hours 10-15
+            assert all((h >= 9) and (h < 16) for h in hours)
+
+    def test_session_filter_reduces_signals(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        signals = generate_signals(sample, classified, table)
+        all_sess = add_session_filter(signals, allowed_sessions=("asia", "london", "ny"))
+        ny_only = add_session_filter(signals, allowed_sessions=("ny",))
+        assert len(ny_only) <= len(all_sess)
+
+    def test_session_column_added(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        signals = generate_signals(sample, classified, table)
+        filtered = add_session_filter(signals, allowed_sessions=("ny",))
+        assert "session" in filtered.columns
+        assert (filtered["session"] == "ny").all()
+
+
+# ============================================================
+# Multi-timeframe confirmation tests
+# ============================================================
+
+class TestMTFConfirmation:
+    @pytest.fixture(scope="class")
+    def mtf_signals(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        signals = generate_signals(sample, classified, table)
+        return add_mtf_confirmation(signals, sample, higher_timeframes=("5min",))
+
+    def test_mtf_columns_added(self, mtf_signals):
+        assert "mtf_score" in mtf_signals.columns
+        assert "mtf_confirm" in mtf_signals.columns
+
+    def test_mtf_score_range(self, mtf_signals):
+        # With 1 higher TF, score range is -1 to +1
+        assert mtf_signals["mtf_score"].min() >= -1
+        assert mtf_signals["mtf_score"].max() <= 1
+
+    def test_filter_mtf_reduces(self, mtf_signals):
+        all_sigs = len(mtf_signals)
+        confirmed = filter_mtf_confirmed(mtf_signals, min_score=1)
+        assert len(confirmed) <= all_sigs
+
+    def test_confirmed_signals_have_positive_score(self, mtf_signals):
+        confirmed = filter_mtf_confirmed(mtf_signals, min_score=1)
+        if len(confirmed) > 0:
+            assert (confirmed["mtf_score"] >= 1).all()
+
+    def test_empty_signals_returns_empty(self, sample):
+        empty = pd.DataFrame()
+        result = add_mtf_confirmation(empty, sample)
+        assert len(result) == 0
+
+
+# ============================================================
+# Optimizer tests
+# ============================================================
+
+class TestOptimizer:
+    def test_grid_search_runs(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        results = grid_search(
+            sample, classified, table,
+            stop_atr_range=(0.75, 1.0),
+            target_atr_range=(None, 2.0),
+            holding_range=(30, 60),
+            session_combos=(("asia", "london", "ny"),),
+            mtf_scores=(0,),
+            min_trades=10,
+            higher_timeframes=("5min",),
+            verbose=False,
+        )
+        assert len(results) > 0
+
+    def test_grid_search_columns(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        results = grid_search(
+            sample, classified, table,
+            stop_atr_range=(1.0,),
+            target_atr_range=(None,),
+            holding_range=(60,),
+            session_combos=(("asia", "london", "ny"),),
+            mtf_scores=(0,),
+            min_trades=10,
+            higher_timeframes=("5min",),
+            verbose=False,
+        )
+        expected_cols = [
+            "stop_atr", "target_atr", "holding_bars", "sessions", "mtf_min",
+            "trades", "net_pnl_pts", "win_rate", "profit_factor", "sharpe",
+        ]
+        for col in expected_cols:
+            assert col in results.columns, f"Missing: {col}"
+
+    def test_grid_search_sorted_by_pnl(self, sample, classified, scan_results):
+        table = build_setup_table(scan_results, min_n=50, min_abs_mean=2.0, min_win_rate=0.50)
+        results = grid_search(
+            sample, classified, table,
+            stop_atr_range=(0.75, 1.0),
+            target_atr_range=(None,),
+            holding_range=(30, 60),
+            session_combos=(("asia", "london", "ny"),),
+            mtf_scores=(0,),
+            min_trades=10,
+            higher_timeframes=("5min",),
+            verbose=False,
+        )
+        if len(results) > 1:
+            # Should be sorted descending by net_pnl_pts
+            pnls = results["net_pnl_pts"].values
+            assert pnls[0] >= pnls[-1]

@@ -1,0 +1,270 @@
+"""Full analysis: backtest + session filter + MTF confirmation + optimization.
+
+Runs everything end-to-end on real MNQ data.
+"""
+
+import time
+import pandas as pd
+import numpy as np
+
+from mnq_morphology.loader import load_parquet, build_continuous
+from mnq_morphology.contextual_morphology import (
+    compute_contextual_features, classify_context, scan_setups,
+    compute_forward_returns as ctx_forward_returns,
+)
+from mnq_morphology.signals import (
+    build_setup_table, generate_signals, filter_no_overlap,
+    add_session_filter, add_mtf_confirmation, filter_mtf_confirmed,
+    classify_session, precompute_mtf_slopes,
+)
+from mnq_morphology.backtest import (
+    run_backtest, trades_to_dataframe, analyze_by_setup, analyze_by_exit,
+)
+from mnq_morphology.optimizer import grid_search
+
+DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
+
+t0 = time.time()
+print("=" * 70)
+print("FULL ANALYSIS — MNQ Morphology Pipeline")
+print("=" * 70)
+
+# ============================================================
+# 1. Load + contextual features
+# ============================================================
+print("\n[1/5] Loading data + computing contextual features...")
+raw = load_parquet(DATA_PATH)
+cont = build_continuous(raw)
+print(f"  {len(cont):,} bars ({cont.index.min()} → {cont.index.max()})")
+
+feats = compute_contextual_features(cont, shape_window=60, context_window=120, step=12)
+classified = classify_context(feats)
+fwd = ctx_forward_returns(cont, classified, forward_bars=(30, 60, 120))
+setups = scan_setups(classified, fwd, min_n=80)
+table = build_setup_table(setups, min_n=80, min_abs_mean=3.0, min_win_rate=0.52)
+print(f"  {len(classified):,} windows, {len(setups)} raw setups, {len(table)} qualifying")
+
+# ============================================================
+# 2. Session filter analysis
+# ============================================================
+print("\n" + "=" * 70)
+print("[2/5] SESSION FILTER ANALYSIS")
+print("=" * 70)
+
+# Generate base signals
+base_sigs = generate_signals(cont, classified, table, stop_atr_mult=1.0, holding_bars=60)
+base_sigs_with_session = add_session_filter(base_sigs, allowed_sessions=("asia", "london", "ny", "off_hours"))
+
+for session_combo, label in [
+    (("asia", "london", "ny"), "All sessions"),
+    (("london", "ny"), "London + NY only"),
+    (("ny",), "NY only"),
+    (("london",), "London only"),
+    (("asia",), "Asia only"),
+]:
+    sigs = base_sigs_with_session[base_sigs_with_session["session"].isin(session_combo)]
+    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    if len(sigs) < 10:
+        print(f"  {label:20s}: too few signals ({len(sigs)})")
+        continue
+    bt = run_backtest(cont, sigs, slippage_pts=0.5, commission_pts=0.5)
+    print(f"  {label:20s}: {bt.total_trades:5d} trades | "
+          f"WR={bt.win_rate:.1%} | PnL={bt.net_pnl_pts:+8.1f} pts | "
+          f"PF={bt.profit_factor:.2f} | Sharpe={bt.sharpe_ratio:+.2f} | "
+          f"DD={bt.max_drawdown_pts:.0f} pts | "
+          f"Exp={bt.expectancy_pts:+.2f} pts/trade")
+
+# ============================================================
+# 3. Multi-timeframe confirmation
+# ============================================================
+print("\n" + "=" * 70)
+print("[3/5] MULTI-TIMEFRAME CONFIRMATION")
+print("=" * 70)
+
+print("  Pre-computing MTF slopes (5min, 1h)...")
+t_mtf = time.time()
+mtf_slopes = precompute_mtf_slopes(cont, higher_timeframes=("5min", "1h"))
+mtf_sigs = add_mtf_confirmation(base_sigs, cont, higher_timeframes=("5min", "1h"),
+                                 precomputed_slopes=mtf_slopes)
+print(f"  MTF computed in {time.time()-t_mtf:.1f}s")
+
+# Score distribution
+print(f"\n  MTF Score distribution:")
+if len(mtf_sigs) > 0:
+    for score in sorted(mtf_sigs["mtf_score"].unique()):
+        n = (mtf_sigs["mtf_score"] == score).sum()
+        print(f"    score={score:+d}: {n:5d} signals ({n/len(mtf_sigs):.1%})")
+
+for min_score, label in [(0, "No MTF filter"), (1, "MTF score >= 1"), (2, "MTF score >= 2")]:
+    if min_score > 0:
+        sigs = filter_mtf_confirmed(mtf_sigs, min_score=min_score)
+    else:
+        sigs = mtf_sigs
+    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    if len(sigs) < 10:
+        print(f"  {label:20s}: too few signals ({len(sigs)})")
+        continue
+    bt = run_backtest(cont, sigs, slippage_pts=0.5, commission_pts=0.5)
+    print(f"  {label:20s}: {bt.total_trades:5d} trades | "
+          f"WR={bt.win_rate:.1%} | PnL={bt.net_pnl_pts:+8.1f} pts | "
+          f"PF={bt.profit_factor:.2f} | Sharpe={bt.sharpe_ratio:+.2f} | "
+          f"Exp={bt.expectancy_pts:+.2f} pts/trade")
+
+# Combined: session + MTF
+print("\n  Combined filters (session + MTF):")
+for sessions, mtf_min in [
+    (("london", "ny"), 1),
+    (("ny",), 1),
+    (("london", "ny"), 2),
+]:
+    sigs = add_session_filter(mtf_sigs, allowed_sessions=sessions)
+    sigs = filter_mtf_confirmed(sigs, min_score=mtf_min)
+    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    label = f"{'+'.join(sessions)} MTF>={mtf_min}"
+    if len(sigs) < 10:
+        print(f"    {label:30s}: too few signals ({len(sigs)})")
+        continue
+    bt = run_backtest(cont, sigs, slippage_pts=0.5, commission_pts=0.5)
+    print(f"    {label:30s}: {bt.total_trades:5d} trades | "
+          f"WR={bt.win_rate:.1%} | PnL={bt.net_pnl_pts:+8.1f} pts | "
+          f"PF={bt.profit_factor:.2f} | Sharpe={bt.sharpe_ratio:+.2f} | "
+          f"Exp={bt.expectancy_pts:+.2f} pts/trade")
+
+# ============================================================
+# 4. Parameter optimization (grid search)
+# ============================================================
+print("\n" + "=" * 70)
+print("[4/5] PARAMETER OPTIMIZATION (Grid Search)")
+print("=" * 70)
+
+opt_results = grid_search(
+    cont, classified, table,
+    stop_atr_range=(0.5, 0.75, 1.0, 1.5),
+    target_atr_range=(None, 1.5, 3.0),
+    holding_range=(30, 60),
+    session_combos=(
+        ("asia", "london", "ny"),
+        ("london", "ny"),
+    ),
+    mtf_scores=(0, 1),
+    slippage_pts=0.5,
+    commission_pts=0.5,
+    min_trades=50,
+    higher_timeframes=("5min", "1h"),
+    verbose=True,
+)
+
+print(f"\n  TOP 15 PARAMETER COMBINATIONS (by net PnL):")
+print("-" * 120)
+if len(opt_results) > 0:
+    display_cols = [
+        "stop_atr", "target_atr", "holding_bars", "sessions", "mtf_min",
+        "trades", "net_pnl_pts", "win_rate", "profit_factor", "sharpe",
+        "max_dd_pts", "expectancy_pts", "pnl_per_dd",
+    ]
+    top = opt_results.head(15)[display_cols]
+    print(top.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
+
+    # Best by different criteria
+    print(f"\n  BEST BY CRITERIA:")
+    print(f"  {'Best PnL:':<20s} stop={opt_results.iloc[0]['stop_atr']}, "
+          f"target={opt_results.iloc[0]['target_atr']}, "
+          f"holding={opt_results.iloc[0]['holding_bars']}, "
+          f"sessions={opt_results.iloc[0]['sessions']}, "
+          f"mtf={opt_results.iloc[0]['mtf_min']}")
+
+    best_sharpe = opt_results.sort_values("sharpe", ascending=False).iloc[0]
+    print(f"  {'Best Sharpe:':<20s} stop={best_sharpe['stop_atr']}, "
+          f"target={best_sharpe['target_atr']}, "
+          f"holding={best_sharpe['holding_bars']}, "
+          f"sessions={best_sharpe['sessions']}, "
+          f"Sharpe={best_sharpe['sharpe']:+.2f}")
+
+    best_pf = opt_results[opt_results["trades"] >= 100].sort_values("profit_factor", ascending=False)
+    if len(best_pf) > 0:
+        bp = best_pf.iloc[0]
+        print(f"  {'Best PF (n>=100):':<20s} stop={bp['stop_atr']}, "
+              f"target={bp['target_atr']}, "
+              f"holding={bp['holding_bars']}, "
+              f"sessions={bp['sessions']}, "
+              f"PF={bp['profit_factor']:.2f}")
+
+    best_ratio = opt_results[opt_results["trades"] >= 100].sort_values("pnl_per_dd", ascending=False)
+    if len(best_ratio) > 0:
+        br = best_ratio.iloc[0]
+        print(f"  {'Best PnL/DD (n>=100):':<20s} stop={br['stop_atr']}, "
+              f"target={br['target_atr']}, "
+              f"holding={br['holding_bars']}, "
+              f"sessions={br['sessions']}, "
+              f"ratio={br['pnl_per_dd']:.2f}")
+
+# ============================================================
+# 5. Best config deep dive
+# ============================================================
+print("\n" + "=" * 70)
+print("[5/5] BEST CONFIGURATION — DEEP DIVE")
+print("=" * 70)
+
+if len(opt_results) > 0:
+    best = opt_results.iloc[0]
+    stop_atr = best["stop_atr"]
+    target_atr = None if best["target_atr"] == "expected" else best["target_atr"]
+    holding = int(best["holding_bars"])
+    sessions = tuple(best["sessions"].split("|"))
+    mtf_min = int(best["mtf_min"])
+
+    print(f"\n  Config: stop_atr={stop_atr}, target_atr={target_atr}, holding={holding}")
+    print(f"          sessions={sessions}, mtf_min={mtf_min}")
+
+    # Re-run with best params
+    sigs = generate_signals(cont, classified, table, stop_atr_mult=stop_atr,
+                            target_atr_mult=target_atr, holding_bars=holding)
+    sigs = add_session_filter(sigs, allowed_sessions=sessions)
+    if mtf_min > 0:
+        sigs = add_mtf_confirmation(sigs, cont, higher_timeframes=("5min", "1h"),
+                                     precomputed_slopes=mtf_slopes)
+        sigs = filter_mtf_confirmed(sigs, min_score=mtf_min)
+    sigs = filter_no_overlap(sigs, min_gap_bars=holding)
+
+    bt = run_backtest(cont, sigs, slippage_pts=0.5, commission_pts=0.5)
+    print(f"\n{bt.summary()}")
+
+    # By setup
+    by_setup = analyze_by_setup(bt)
+    if len(by_setup) > 0:
+        print("\nPERFORMANCE BY SETUP:")
+        print(by_setup.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
+
+    # By exit
+    by_exit = analyze_by_exit(bt)
+    if len(by_exit) > 0:
+        print("\nPERFORMANCE BY EXIT REASON:")
+        print(by_exit.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
+
+    # By year
+    trades_df = trades_to_dataframe(bt)
+    if len(trades_df) > 0:
+        trades_df["year"] = trades_df["entry_time"].dt.year
+        yearly = trades_df.groupby("year").agg(
+            trades=("net_pnl", "count"),
+            net_pnl=("net_pnl", "sum"),
+            avg_pnl=("net_pnl", "mean"),
+            win_rate=("net_pnl", lambda x: (x > 0).mean()),
+        ).round(2)
+        print("\nPERFORMANCE BY YEAR:")
+        print(yearly.to_string())
+
+    # By session
+    if "session" in sigs.columns:
+        print("\nPERFORMANCE BY SESSION:")
+        for sess in ["asia", "london", "ny"]:
+            sub_sigs = sigs[sigs["session"] == sess]
+            sub_sigs = filter_no_overlap(sub_sigs, min_gap_bars=holding)
+            if len(sub_sigs) < 5:
+                continue
+            sub_bt = run_backtest(cont, sub_sigs, slippage_pts=0.5, commission_pts=0.5)
+            print(f"  {sess:8s}: {sub_bt.total_trades:4d} trades | "
+                  f"WR={sub_bt.win_rate:.1%} | PnL={sub_bt.net_pnl_pts:+8.1f} pts | "
+                  f"PF={sub_bt.profit_factor:.2f}")
+
+print(f"\n\nTotal analysis time: {time.time()-t0:.1f}s")
