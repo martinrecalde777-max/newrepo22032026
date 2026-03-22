@@ -1,0 +1,9 @@
+{
+  "xgb_direction_accuracy": 0.5174704427554591,
+  "lgb_direction_accuracy": 0.517764507178188,
+  "magnitude_accuracy": 0.886053806249246,
+  "feature_count": 181,
+  "order_flow_features": 25,
+  "cross_asset_features": 11,
+  "timestamp": "2026-03-22T21:38:34.587058"
+}

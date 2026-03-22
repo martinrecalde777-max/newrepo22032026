@@ -1,0 +1,213 @@
+{
+  "per_window": {
+    "0.0": [
+      {
+        "window": 0,
+        "train_size": 589438,
+        "test_size": 294719,
+        "dir_accuracy": 0.5179374251405576,
+        "mag_accuracy": 0.950033760972316,
+        "n_trades": 21751,
+        "total_pnl": -6679.25,
+        "win_rate": 0.5118845110569629,
+        "ev_per_trade": -0.307077835501816,
+        "sharpe": -0.13597968911266337
+      },
+      {
+        "window": 1,
+        "train_size": 884157,
+        "test_size": 294719,
+        "dir_accuracy": 0.5180290378292544,
+        "mag_accuracy": 0.9522799683766571,
+        "n_trades": 21919,
+        "total_pnl": 24628.0,
+        "win_rate": 0.5376157671426616,
+        "ev_per_trade": 1.1235914047173685,
+        "sharpe": 0.5047296992477764
+      },
+      {
+        "window": 2,
+        "train_size": 1178876,
+        "test_size": 294719,
+        "dir_accuracy": 0.5145002527831596,
+        "mag_accuracy": 0.8695876411089886,
+        "n_trades": 19057,
+        "total_pnl": 3356.5,
+        "win_rate": 0.5031222123104371,
+        "ev_per_trade": 0.17612950621818754,
+        "sharpe": 0.0480595193723643
+      },
+      {
+        "window": 3,
+        "train_size": 1473595,
+        "test_size": 294719,
+        "dir_accuracy": 0.5192912570957421,
+        "mag_accuracy": 0.8892640108035111,
+        "n_trades": 16288,
+        "total_pnl": 36028.25,
+        "win_rate": 0.5233914538310412,
+        "ev_per_trade": 2.2119505157170924,
+        "sharpe": 0.72861537140042
+      },
+      {
+        "window": 4,
+        "train_size": 1768314,
+        "test_size": 5,
+        "dir_accuracy": 0.0,
+        "mag_accuracy": 1.0,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "win_rate": 0,
+        "ev_per_trade": 0,
+        "sharpe": 0
+      }
+    ],
+    "0.5": [
+      {
+        "window": 0,
+        "train_size": 589438,
+        "test_size": 294719,
+        "dir_accuracy": 0.5179374251405576,
+        "mag_accuracy": 0.950033760972316,
+        "n_trades": 525,
+        "total_pnl": 1766.0,
+        "win_rate": 0.5066666666666667,
+        "ev_per_trade": 3.363809523809524,
+        "sharpe": 0.49142452504569806
+      },
+      {
+        "window": 1,
+        "train_size": 884157,
+        "test_size": 294719,
+        "dir_accuracy": 0.5180290378292544,
+        "mag_accuracy": 0.9522799683766571,
+        "n_trades": 99,
+        "total_pnl": -3912.0,
+        "win_rate": 0.41414141414141414,
+        "ev_per_trade": -39.515151515151516,
+        "sharpe": -5.585390097250591
+      },
+      {
+        "window": 2,
+        "train_size": 1178876,
+        "test_size": 294719,
+        "dir_accuracy": 0.5145002527831596,
+        "mag_accuracy": 0.8695876411089886,
+        "n_trades": 1232,
+        "total_pnl": -883.25,
+        "win_rate": 0.5048701298701299,
+        "ev_per_trade": -0.7169237012987013,
+        "sharpe": -0.09037627041426606
+      },
+      {
+        "window": 3,
+        "train_size": 1473595,
+        "test_size": 294719,
+        "dir_accuracy": 0.5192912570957421,
+        "mag_accuracy": 0.8892640108035111,
+        "n_trades": 1244,
+        "total_pnl": 8570.5,
+        "win_rate": 0.48633440514469456,
+        "ev_per_trade": 6.889469453376206,
+        "sharpe": 1.4176056788806806
+      },
+      {
+        "window": 4,
+        "train_size": 1768314,
+        "test_size": 5,
+        "dir_accuracy": 0.0,
+        "mag_accuracy": 1.0,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "win_rate": 0,
+        "ev_per_trade": 0,
+        "sharpe": 0
+      }
+    ],
+    "0.6": [
+      {
+        "window": 0,
+        "train_size": 589438,
+        "test_size": 294719,
+        "dir_accuracy": 0.5179374251405576,
+        "mag_accuracy": 0.950033760972316,
+        "n_trades": 191,
+        "total_pnl": -1710.75,
+        "win_rate": 0.5445026178010471,
+        "ev_per_trade": -8.956806282722512,
+        "sharpe": -1.2703846836026045
+      },
+      {
+        "window": 1,
+        "train_size": 884157,
+        "test_size": 294719,
+        "dir_accuracy": 0.5180290378292544,
+        "mag_accuracy": 0.9522799683766571,
+        "n_trades": 29,
+        "total_pnl": -1327.75,
+        "win_rate": 0.3103448275862069,
+        "ev_per_trade": -45.78448275862069,
+        "sharpe": -9.704143719519772
+      },
+      {
+        "window": 2,
+        "train_size": 1178876,
+        "test_size": 294719,
+        "dir_accuracy": 0.5145002527831596,
+        "mag_accuracy": 0.8695876411089886,
+        "n_trades": 781,
+        "total_pnl": -13425.5,
+        "win_rate": 0.4379001280409731,
+        "ev_per_trade": -17.190140845070424,
+        "sharpe": -1.9627483604624474
+      },
+      {
+        "window": 3,
+        "train_size": 1473595,
+        "test_size": 294719,
+        "dir_accuracy": 0.5192912570957421,
+        "mag_accuracy": 0.8892640108035111,
+        "n_trades": 292,
+        "total_pnl": 6460.0,
+        "win_rate": 0.541095890410959,
+        "ev_per_trade": 22.123287671232877,
+        "sharpe": 3.576119797899478
+      },
+      {
+        "window": 4,
+        "train_size": 1768314,
+        "test_size": 5,
+        "dir_accuracy": 0.0,
+        "mag_accuracy": 1.0,
+        "n_trades": 0,
+        "total_pnl": 0.0,
+        "win_rate": 0,
+        "ev_per_trade": 0,
+        "sharpe": 0
+      }
+    ]
+  },
+  "summary": {
+    "0.0": {
+      "total_pnl": 57333.5,
+      "avg_wr": 0.5190034860852757,
+      "avg_ev": 0.8011483977877081,
+      "avg_sharpe": 0.28635622522697435,
+      "total_trades": 79015
+    },
+    "0.5": {
+      "total_pnl": 5541.25,
+      "avg_wr": 0.47800315395572635,
+      "avg_ev": -7.4946990598161225,
+      "avg_sharpe": -0.9416840409346197,
+      "total_trades": 3100
+    },
+    "0.6": {
+      "total_pnl": -10004.0,
+      "avg_wr": 0.4584608659597965,
+      "avg_ev": -12.452035553795188,
+      "avg_sharpe": -2.340289241421336,
+      "total_trades": 1293
+    }
+  }
+}
