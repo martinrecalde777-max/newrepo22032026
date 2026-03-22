@@ -1,0 +1,238 @@
+"""Tests for MNQ morphology pipeline using real data.
+
+All tests use the actual Databento parquet file to ensure the pipeline
+works correctly on real MNQ price action, not synthetic data.
+"""
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from mnq_morphology.loader import load_parquet, build_continuous
+from mnq_morphology.morphology import compute_morphology, TICK
+from mnq_morphology.patterns import detect_patterns, PATTERN_REGISTRY
+from mnq_morphology.aggregator import aggregate
+
+DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
+
+
+@pytest.fixture(scope="module")
+def raw():
+    """Load full raw dataset once per test module."""
+    return load_parquet(DATA_PATH)
+
+
+@pytest.fixture(scope="module")
+def continuous(raw):
+    """Build continuous front-month series once."""
+    return build_continuous(raw)
+
+
+@pytest.fixture(scope="module")
+def morphology(continuous):
+    """Compute morphology features once."""
+    return compute_morphology(continuous)
+
+
+# ============================================================
+# Loader tests
+# ============================================================
+
+class TestLoader:
+    def test_loads_correct_shape(self, raw):
+        assert len(raw) == 2_772_393
+        assert set(raw.columns) == {"open", "high", "low", "close", "volume", "symbol"}
+
+    def test_no_spreads(self, raw):
+        """Calendar spreads (symbols with '-') should be excluded."""
+        assert not raw["symbol"].str.contains("-").any()
+
+    def test_25_pure_contracts(self, raw):
+        assert raw["symbol"].nunique() == 25
+
+    def test_datetime_index(self, raw):
+        assert raw.index.name == "datetime"
+        assert raw.index.tz is not None  # timezone-aware
+
+    def test_no_nans_in_ohlcv(self, raw):
+        for col in ["open", "high", "low", "close", "volume"]:
+            assert raw[col].isna().sum() == 0
+
+    def test_price_range_sane(self, raw):
+        """MNQ prices should be in 10,000-30,000 range (no fixed-point artifacts)."""
+        assert raw["close"].min() > 10_000
+        assert raw["close"].max() < 30_000
+
+    def test_date_range(self, raw):
+        assert raw.index.min().year == 2021
+        assert raw.index.max().year == 2026
+
+
+# ============================================================
+# Continuous contract tests
+# ============================================================
+
+class TestContinuous:
+    def test_single_symbol_per_timestamp(self, continuous):
+        """Each timestamp should have exactly one bar (front-month only)."""
+        dupes = continuous.index.duplicated().sum()
+        assert dupes == 0
+
+    def test_fewer_bars_than_raw(self, raw, continuous):
+        assert len(continuous) < len(raw)
+
+    def test_no_gaps_in_active_sessions(self, continuous):
+        """Spot-check: no multi-hour gaps (CME has 1h daily halt 5-6 PM ET)."""
+        sample = continuous.loc["2024-06-03":"2024-06-03"]
+        if len(sample) > 1:
+            gaps = sample.index.to_series().diff().dropna()
+            # Max gap should be ~1h (daily maintenance halt) not hours
+            max_gap = gaps.max()
+            assert max_gap <= pd.Timedelta("65min")
+
+    def test_rollovers_happen(self, continuous):
+        """Should have multiple contract rollovers over 5 years."""
+        changes = (continuous["symbol"] != continuous["symbol"].shift()).sum()
+        assert changes >= 15  # ~20 expected quarterly rolls
+
+
+# ============================================================
+# Morphology tests
+# ============================================================
+
+class TestMorphology:
+    def test_all_features_present(self, morphology):
+        expected = [
+            "body", "body_abs", "range", "upper_wick", "lower_wick",
+            "midpoint", "body_ratio", "upper_wick_ratio", "lower_wick_ratio",
+            "wick_imbalance", "direction", "body_ticks", "range_ticks",
+            "true_range", "atr_5", "atr_20", "range_vs_atr20",
+            "close_chg", "close_pct", "gap", "vol_ma5", "vol_ma20",
+            "vol_ratio", "streak",
+        ]
+        for f in expected:
+            assert f in morphology.columns, f"Missing feature: {f}"
+
+    def test_body_ratio_bounds(self, morphology):
+        br = morphology["body_ratio"].dropna()
+        assert (br >= 0).all()
+        assert (br <= 1).all()
+
+    def test_wick_ratios_non_negative(self, morphology):
+        for col in ["upper_wick_ratio", "lower_wick_ratio"]:
+            vals = morphology[col].dropna()
+            assert (vals >= -1e-10).all()  # tiny float tolerance
+
+    def test_ratios_sum_to_one(self, morphology):
+        """body_ratio + upper_wick_ratio + lower_wick_ratio ≈ 1.0."""
+        s = (
+            morphology["body_ratio"]
+            + morphology["upper_wick_ratio"]
+            + morphology["lower_wick_ratio"]
+        ).dropna()
+        assert np.allclose(s, 1.0, atol=1e-10)
+
+    def test_direction_values(self, morphology):
+        assert set(morphology["direction"].unique()) <= {-1, 0, 1}
+
+    def test_body_ticks_are_quarter_point_multiples(self, morphology):
+        """MNQ tick = 0.25, so body_ticks should be integers."""
+        bt = morphology["body_ticks"].dropna()
+        assert np.allclose(bt, bt.round(), atol=1e-8)
+
+    def test_mean_range_matches_known_value(self, morphology):
+        """Mean range should be ~7 points (known from data analysis)."""
+        assert 5.0 < morphology["range"].mean() < 9.0
+
+    def test_mean_body_ratio_matches_known_value(self, morphology):
+        """Mean body_ratio should be ~0.46 (known from data analysis)."""
+        assert 0.40 < morphology["body_ratio"].mean() < 0.52
+
+    def test_streak_sign_matches_direction(self, morphology):
+        """Non-zero streaks should have same sign as their direction."""
+        nonzero = morphology[morphology["streak"] != 0]
+        assert (np.sign(nonzero["streak"]) == nonzero["direction"]).all()
+
+
+# ============================================================
+# Pattern tests
+# ============================================================
+
+class TestPatterns:
+    def test_all_17_patterns_detected(self, morphology):
+        pats = detect_patterns(morphology)
+        assert len(pats.columns) == 17
+
+    def test_doji_frequency(self, morphology):
+        """~10% of bars should be doji (body_ratio < 0.10)."""
+        pats = detect_patterns(morphology, ["doji"])
+        pct = pats["pat_doji"].mean()
+        assert 0.05 < pct < 0.15
+
+    def test_marubozu_frequency(self, morphology):
+        """~5% of bars should be marubozu (body_ratio > 0.89 = p95)."""
+        pats = detect_patterns(morphology, ["marubozu"])
+        pct = pats["pat_marubozu"].mean()
+        assert 0.02 < pct < 0.10
+
+    def test_morning_star_rarer_than_doji(self, morphology):
+        pats = detect_patterns(morphology, ["doji", "morning_star"])
+        assert pats["pat_morning_star"].sum() < pats["pat_doji"].sum()
+
+    def test_engulfing_symmetry(self, morphology):
+        """Bullish and bearish engulfing should have similar counts (±20%)."""
+        pats = detect_patterns(morphology, ["engulfing_bullish", "engulfing_bearish"])
+        bull = pats["pat_engulfing_bullish"].sum()
+        bear = pats["pat_engulfing_bearish"].sum()
+        ratio = bull / bear if bear > 0 else 0
+        assert 0.8 < ratio < 1.2
+
+    def test_unknown_pattern_raises(self, morphology):
+        with pytest.raises(ValueError, match="Unknown"):
+            detect_patterns(morphology, ["fake_pattern"])
+
+
+# ============================================================
+# Aggregation tests
+# ============================================================
+
+class TestAggregation:
+    def test_5min_reduces_bars(self, continuous):
+        agg = aggregate(continuous, "5min")
+        assert len(agg) < len(continuous)
+        # ~5x fewer bars
+        ratio = len(continuous) / len(agg)
+        assert 4.5 < ratio < 5.5
+
+    def test_1h_bar_count(self, continuous):
+        agg = aggregate(continuous, "1h")
+        assert 25_000 < len(agg) < 35_000
+
+    def test_daily_bar_count(self, continuous):
+        agg = aggregate(continuous, "1D")
+        # ~5 years, ~260 trading days/year → ~1300
+        assert 1_200 < len(agg) < 2_000
+
+    def test_aggregation_preserves_high_low(self, continuous):
+        """Aggregated high must >= all component highs."""
+        sample = continuous.loc["2024-06-03"]
+        agg = aggregate(sample, "1h")
+        if len(agg) > 0:
+            assert agg["high"].max() == sample["high"].max()
+            assert agg["low"].min() == sample["low"].min()
+
+    def test_volume_sums_correctly(self, continuous):
+        """Daily aggregated volume should equal sum of 1-min volumes."""
+        day = "2024-06-03"
+        day_1min = continuous.loc[day]
+        agg = aggregate(day_1min, "1D")
+        if len(agg) > 0:
+            assert agg["volume"].sum() == day_1min["volume"].sum()
+
+    def test_morphology_works_on_aggregated(self, continuous):
+        """Full morphology + patterns should work on aggregated data."""
+        agg = aggregate(continuous, "1h")
+        morph = compute_morphology(agg)
+        pats = detect_patterns(morph)
+        assert len(morph) == len(agg)
+        assert len(pats) == len(agg)

@@ -1,144 +1,121 @@
-"""Main pipeline orchestrator.
+"""MNQ Morphology Pipeline — full end-to-end execution.
 
-Loads data → computes morphology → detects patterns → aggregates timeframes
-→ exports results.
+Usage:
+    python -m mnq_morphology.pipeline [--output-dir output] [--start 2024-01-01] [--end 2025-01-01]
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
 
-from mnq_morphology.loaders import load_ohlcv
-from mnq_morphology.features import compute_morphology
+from mnq_morphology.loader import load_parquet, build_continuous
+from mnq_morphology.morphology import compute_morphology
 from mnq_morphology.patterns import detect_patterns
-from mnq_morphology.aggregators import aggregate_timeframe
-from mnq_morphology.aggregators.timeframe import TIMEFRAMES
+from mnq_morphology.aggregator import aggregate, TIMEFRAMES
 
 
-def run_pipeline(
-    csv_path: str | Path,
+DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
+
+
+def run(
+    data_path: str = DATA_PATH,
     *,
-    output_dir: str | Path = "output",
+    output_dir: str = "output",
     timeframes: tuple[str, ...] = TIMEFRAMES,
-    tz: str = "US/Eastern",
     start: str | None = None,
     end: str | None = None,
 ) -> dict[str, pd.DataFrame]:
-    """Execute the full morphology pipeline.
+    """Execute the full pipeline on real MNQ data."""
 
-    Returns
-    -------
-    dict[str, pd.DataFrame]
-        Keys: '1min', and each aggregated timeframe.
-        Each DataFrame contains OHLCV + morphology features + pattern flags.
-    """
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    results = {}
 
     # 1. Load
-    print(f"[1/4] Loading data from {csv_path} …")
-    df = load_ohlcv(csv_path, tz=tz, start=start, end=end)
-    print(f"       Loaded {len(df):,} bars  ({df.index.min()} → {df.index.max()})")
+    t0 = time.time()
+    print(f"[1/5] Loading {data_path} …")
+    raw = load_parquet(data_path)
+    print(f"       {len(raw):,} bars, {raw['symbol'].nunique()} contracts in {time.time()-t0:.1f}s")
 
-    results: dict[str, pd.DataFrame] = {}
+    # 2. Continuous series
+    t1 = time.time()
+    print("[2/5] Building continuous front-month series …")
+    cont = build_continuous(raw)
+    if start:
+        cont = cont.loc[start:]
+    if end:
+        cont = cont.loc[:end]
+    print(f"       {len(cont):,} bars ({cont.index.min()} → {cont.index.max()}) in {time.time()-t1:.1f}s")
 
-    # 2-3. Morphology + Patterns on base 1-min timeframe
-    print("[2/4] Computing morphology features …")
-    df_morph = compute_morphology(df)
-    print("[3/4] Detecting candlestick patterns …")
-    df_pats = detect_patterns(df_morph)
-    df_full = pd.concat([df_morph, df_pats], axis=1)
-    results["1min"] = df_full
+    # 3. Morphology
+    t2 = time.time()
+    print("[3/5] Computing morphology features …")
+    morph = compute_morphology(cont)
+    print(f"       {morph.shape[1]} features in {time.time()-t2:.1f}s")
 
-    # Save base timeframe
-    out_path = output_dir / "mnq_1min_morphology.parquet"
-    df_full.to_parquet(out_path)
-    print(f"       Saved → {out_path}")
+    # 4. Patterns
+    t3 = time.time()
+    print("[4/5] Detecting candlestick patterns …")
+    pats = detect_patterns(morph)
+    full = pd.concat([morph, pats], axis=1)
+    results["1min"] = full
 
-    # 4. Aggregate to higher timeframes and repeat
-    print("[4/4] Aggregating to higher timeframes …")
+    fp = out / "mnq_1min_morphology.parquet"
+    full.to_parquet(fp)
+    print(f"       17 patterns detected in {time.time()-t3:.1f}s → {fp}")
+
+    # 5. Multi-timeframe
+    t4 = time.time()
+    print("[5/5] Aggregating to higher timeframes …")
     for tf in timeframes:
-        df_tf = aggregate_timeframe(df, tf)
-        df_tf_morph = compute_morphology(df_tf)
-        df_tf_pats = detect_patterns(df_tf_morph)
-        df_tf_full = pd.concat([df_tf_morph, df_tf_pats], axis=1)
-        results[tf] = df_tf_full
+        agg = aggregate(cont, tf)
+        agg_morph = compute_morphology(agg)
+        agg_pats = detect_patterns(agg_morph)
+        agg_full = pd.concat([agg_morph, agg_pats], axis=1)
+        results[tf] = agg_full
 
-        safe_name = tf.replace("min", "m").lower()
-        out_path = output_dir / f"mnq_{safe_name}_morphology.parquet"
-        df_tf_full.to_parquet(out_path)
-        print(f"       {tf:>5}: {len(df_tf_full):>10,} bars → {out_path}")
+        safe = tf.replace("min", "m").lower()
+        fp = out / f"mnq_{safe}_morphology.parquet"
+        agg_full.to_parquet(fp)
+        print(f"       {tf:>5}: {len(agg_full):>10,} bars → {fp}")
+
+    print(f"\nTotal time: {time.time()-t0:.1f}s")
 
     # Summary
-    _print_summary(results)
-
+    _summary(results)
     return results
 
 
-def _print_summary(results: dict[str, pd.DataFrame]) -> None:
-    """Print a quick summary of pattern detections across timeframes."""
-    print("\n" + "=" * 60)
-    print("PATTERN SUMMARY")
-    print("=" * 60)
+def _summary(results: dict[str, pd.DataFrame]) -> None:
     pat_cols = [c for c in results["1min"].columns if c.startswith("pat_")]
-    header = f"{'Timeframe':>10}" + "".join(f"{p.replace('pat_',''):>18}" for p in pat_cols)
-    print(header)
-    print("-" * len(header))
+    print("\n" + "=" * 70)
+    print("PATTERN SUMMARY ACROSS TIMEFRAMES")
+    print("=" * 70)
     for tf, df in results.items():
-        counts = "".join(f"{df[p].sum():>18,}" for p in pat_cols)
-        print(f"{tf:>10}{counts}")
-    print("=" * 60)
+        total = len(df)
+        counts = {p.replace("pat_", ""): int(df[p].sum()) for p in pat_cols}
+        top3 = sorted(counts.items(), key=lambda x: -x[1])[:3]
+        top_str = ", ".join(f"{n}={c:,}" for n, c in top3)
+        print(f"  {tf:>5} ({total:>10,} bars): {top_str}")
+    print("=" * 70)
 
 
 def main(argv: list[str] | None = None) -> None:
-    """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="MNQ Morphology Pipeline — candlestick analysis for MNQ futures",
-    )
-    parser.add_argument(
-        "csv",
-        help="Path to the OHLCV CSV file (Databento glbx-mdp3 or generic).",
-    )
-    parser.add_argument(
-        "-o", "--output-dir",
-        default="output",
-        help="Directory for output parquet files (default: output/).",
-    )
-    parser.add_argument(
-        "--tz",
-        default="US/Eastern",
-        help="Timezone for timestamps (default: US/Eastern).",
-    )
-    parser.add_argument(
-        "--start",
-        default=None,
-        help="Start date filter (ISO-8601).",
-    )
-    parser.add_argument(
-        "--end",
-        default=None,
-        help="End date filter (ISO-8601).",
-    )
-    parser.add_argument(
-        "--timeframes",
-        nargs="+",
-        default=list(TIMEFRAMES),
-        help=f"Timeframes to aggregate (default: {' '.join(TIMEFRAMES)}).",
-    )
+    parser = argparse.ArgumentParser(description="MNQ Morphology Pipeline")
+    parser.add_argument("--data", default=DATA_PATH, help="Path to parquet file")
+    parser.add_argument("-o", "--output-dir", default="output")
+    parser.add_argument("--start", default=None, help="Start date (ISO-8601)")
+    parser.add_argument("--end", default=None, help="End date (ISO-8601)")
+    parser.add_argument("--timeframes", nargs="+", default=list(TIMEFRAMES))
     args = parser.parse_args(argv)
 
-    run_pipeline(
-        args.csv,
-        output_dir=args.output_dir,
-        timeframes=tuple(args.timeframes),
-        tz=args.tz,
-        start=args.start,
-        end=args.end,
-    )
+    run(args.data, output_dir=args.output_dir, timeframes=tuple(args.timeframes),
+        start=args.start, end=args.end)
 
 
 if __name__ == "__main__":
