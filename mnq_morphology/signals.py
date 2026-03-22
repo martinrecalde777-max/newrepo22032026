@@ -1,0 +1,213 @@
+"""Signal generator — converts contextual morphology setups into trade signals.
+
+Takes the best (ctx_trend, shape_type, vol_regime) combos identified by
+scan_setups and generates concrete long/short signals with expected
+holding period and confidence level.
+
+Each signal includes:
+    - direction: 'long' or 'short'
+    - entry_price: close at signal bar
+    - stop_distance: ATR-based stop in points
+    - target_distance: based on historical mean forward return
+    - holding_bars: expected holding period
+    - confidence: sample size / min_n ratio (capped at 1.0)
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+
+def compute_atr(df: pd.DataFrame, period: int = 20) -> pd.Series:
+    """Average True Range in points."""
+    h = df["high"]
+    l = df["low"]
+    c = df["close"].shift(1)
+    tr = pd.concat([h - l, (h - c).abs(), (l - c).abs()], axis=1).max(axis=1)
+    return tr.rolling(period).mean()
+
+
+def build_setup_table(
+    scan_results: pd.DataFrame,
+    min_n: int = 80,
+    min_abs_mean: float = 3.0,
+    min_win_rate: float = 0.52,
+    max_p_value: float | None = None,
+) -> pd.DataFrame:
+    """Filter scan_setups output to keep only actionable setups.
+
+    Parameters
+    ----------
+    scan_results : output of contextual_morphology.scan_setups()
+    min_n : minimum sample size
+    min_abs_mean : minimum absolute mean forward return (points)
+    min_win_rate : minimum win rate
+    max_p_value : if provided, filter by p-value column (optional)
+
+    Returns
+    -------
+    DataFrame of qualifying setups with direction assigned.
+    """
+    if len(scan_results) == 0:
+        return pd.DataFrame()
+
+    # Find the first fwd_*_mean column
+    mean_cols = [c for c in scan_results.columns if c.endswith("_mean")]
+    if not mean_cols:
+        return pd.DataFrame()
+
+    fwd_mean = mean_cols[0]
+    fwd_win = fwd_mean.replace("_mean", "_win")
+
+    mask = (
+        (scan_results["n"] >= min_n)
+        & (scan_results[fwd_mean].abs() >= min_abs_mean)
+    )
+    if fwd_win in scan_results.columns:
+        # For short setups, "win" means price went down, so win rate logic
+        # depends on direction. We use raw win rate for longs and (1-win) for shorts.
+        # But scan_setups already computes win = P(fwd > 0), so:
+        #   long setups: want high win rate
+        #   short setups: want low win rate (= high loss rate for the fwd > 0 metric)
+        long_mask = (scan_results[fwd_mean] > 0) & (scan_results[fwd_win] >= min_win_rate)
+        short_mask = (scan_results[fwd_mean] < 0) & ((1 - scan_results[fwd_win]) >= min_win_rate)
+        mask = mask & (long_mask | short_mask)
+
+    out = scan_results[mask].copy()
+    if len(out) == 0:
+        return pd.DataFrame()
+
+    out["direction"] = np.where(out[fwd_mean] > 0, "long", "short")
+    out["expected_move"] = out[fwd_mean].abs()
+
+    # Confidence: how much data backs this setup (capped at 1.0)
+    out["confidence"] = (out["n"] / (min_n * 5)).clip(upper=1.0)
+
+    return out.sort_values("expected_move", ascending=False).reset_index(drop=True)
+
+
+def generate_signals(
+    df: pd.DataFrame,
+    features: pd.DataFrame,
+    setup_table: pd.DataFrame,
+    atr_period: int = 20,
+    stop_atr_mult: float = 1.5,
+    target_atr_mult: float | None = None,
+    holding_bars: int = 60,
+) -> pd.DataFrame:
+    """Generate trade signals on the bar-level DataFrame.
+
+    Parameters
+    ----------
+    df : OHLCV DataFrame (1-min bars)
+    features : classified contextual features (output of classify_context)
+    setup_table : filtered setups from build_setup_table()
+    atr_period : period for ATR calculation
+    stop_atr_mult : stop distance = ATR * this multiplier
+    target_atr_mult : target distance = ATR * this. If None, uses setup's expected_move.
+    holding_bars : max bars to hold if neither stop nor target hit
+
+    Returns
+    -------
+    DataFrame of signals with columns:
+        timestamp, direction, entry_price, stop_price, target_price,
+        holding_bars, setup_key, confidence
+    """
+    if len(setup_table) == 0:
+        return pd.DataFrame()
+
+    atr = compute_atr(df, atr_period)
+
+    # Build lookup: (ctx_trend, shape_type, vol_regime) -> setup info
+    setup_lookup = {}
+    for _, row in setup_table.iterrows():
+        key = (row["ctx_trend"], row["shape_type"], row["vol_regime"])
+        if key not in setup_lookup:
+            setup_lookup[key] = row
+
+    signals = []
+    required_cols = {"ctx_trend", "shape_type", "vol_regime"}
+    if not required_cols.issubset(features.columns):
+        return pd.DataFrame()
+
+    for ts in features.index:
+        ctx = features.loc[ts, "ctx_trend"]
+        shape = features.loc[ts, "shape_type"]
+        vol = features.loc[ts, "vol_regime"]
+        key = (ctx, shape, vol)
+
+        if key not in setup_lookup:
+            continue
+
+        setup = setup_lookup[key]
+        if ts not in atr.index or pd.isna(atr.loc[ts]):
+            continue
+
+        current_atr = atr.loc[ts]
+        if current_atr <= 0:
+            continue
+
+        entry = df.loc[ts, "close"]
+        stop_dist = current_atr * stop_atr_mult
+
+        if target_atr_mult is not None:
+            target_dist = current_atr * target_atr_mult
+        else:
+            target_dist = setup["expected_move"]
+
+        direction = setup["direction"]
+        if direction == "long":
+            stop_price = entry - stop_dist
+            target_price = entry + target_dist
+        else:
+            stop_price = entry + stop_dist
+            target_price = entry - target_dist
+
+        signals.append({
+            "timestamp": ts,
+            "direction": direction,
+            "entry_price": entry,
+            "stop_price": stop_price,
+            "target_price": target_price,
+            "stop_distance": stop_dist,
+            "target_distance": target_dist,
+            "holding_bars": holding_bars,
+            "setup_key": f"{ctx}|{shape}|{vol}",
+            "confidence": setup["confidence"],
+            "atr": current_atr,
+        })
+
+    result = pd.DataFrame(signals)
+    if len(result) > 0:
+        result = result.set_index("timestamp").sort_index()
+    return result
+
+
+def filter_no_overlap(signals: pd.DataFrame, min_gap_bars: int = 60) -> pd.DataFrame:
+    """Remove overlapping signals — keep only one per min_gap_bars window.
+
+    When multiple signals fire within the holding period, we keep the one
+    with highest confidence.
+    """
+    if len(signals) <= 1:
+        return signals
+
+    signals = signals.sort_index()
+    kept = [0]  # always keep first signal
+
+    for i in range(1, len(signals)):
+        prev_ts = signals.index[kept[-1]]
+        curr_ts = signals.index[i]
+
+        # Compute bar gap (works for DatetimeIndex with freq)
+        gap = (curr_ts - prev_ts).total_seconds() / 60  # minutes = bars for 1-min data
+
+        if gap >= min_gap_bars:
+            kept.append(i)
+        else:
+            # If new signal has higher confidence, replace
+            if signals.iloc[i]["confidence"] > signals.iloc[kept[-1]]["confidence"]:
+                kept[-1] = i
+
+    return signals.iloc[kept]
