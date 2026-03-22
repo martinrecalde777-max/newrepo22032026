@@ -1,0 +1,1402 @@
+{
+  "strategies_tested": 18,
+  "strategies_with_trades": 18,
+  "contract_specs": {
+    "tick_size": 0.25,
+    "tick_value": 0.5,
+    "point_value": 2.0,
+    "commission_rt": 1.24,
+    "slippage_ticks": 1
+  },
+  "ranking": [
+    {
+      "name": "W5_C2long_H5",
+      "n_trades_full": 994,
+      "n_trades_oos": 264,
+      "pnl_full": 55698.440000000235,
+      "pnl_oos": 19908.13999999998,
+      "wr_full": 0.4245472837022133,
+      "wr_oos": 0.48484848484848486,
+      "pf_full": 3.5268337296838244,
+      "pf_oos": 4.6965226045558195,
+      "sharpe_full": 4.898934859079997,
+      "sharpe_oos": 6.0836960169631285,
+      "max_dd_full": -805.2400000000816,
+      "max_dd_oos": -518.2799999999952,
+      "avg_pnl": 56.03464788732394,
+      "payoff": 4.780447614642529
+    },
+    {
+      "name": "W5_C2long_H20",
+      "n_trades_full": 994,
+      "n_trades_oos": 264,
+      "pnl_full": 46889.939999999886,
+      "pnl_oos": 18935.14,
+      "wr_full": 0.36519114688128773,
+      "wr_oos": 0.4128787878787879,
+      "pf_full": 2.4895180867562017,
+      "pf_oos": 3.460003637686432,
+      "sharpe_full": 4.080686488817428,
+      "sharpe_oos": 5.602552906661919,
+      "max_dd_full": -1309.4800000000432,
+      "max_dd_oos": -716.2999999999956,
+      "avg_pnl": 47.172977867203215,
+      "payoff": 4.327509401496317
+    },
+    {
+      "name": "W5_C2long_H10",
+      "n_trades_full": 994,
+      "n_trades_oos": 264,
+      "pnl_full": 47782.440000000046,
+      "pnl_oos": 18520.640000000014,
+      "wr_full": 0.38028169014084506,
+      "wr_oos": 0.4318181818181818,
+      "pf_full": 2.749770029412799,
+      "pf_oos": 3.7476656034418823,
+      "sharpe_full": 4.201565038845503,
+      "sharpe_oos": 5.5782343893756705,
+      "max_dd_full": -874.200000000048,
+      "max_dd_oos": -742.4199999999928,
+      "avg_pnl": 48.07086519114688,
+      "payoff": 4.481106714598635
+    },
+    {
+      "name": "W3_momentum_H5_SL10",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 55577.48000000036,
+      "pnl_oos": 15937.300000000032,
+      "wr_full": 0.3622994652406417,
+      "wr_oos": 0.3463414634146341,
+      "pf_full": 7.7391311728657035,
+      "pf_oos": 7.5500419207943565,
+      "sharpe_full": 6.489059086772277,
+      "sharpe_oos": 6.533758797944614,
+      "max_dd_full": -386.23999999994703,
+      "max_dd_oos": -218.12,
+      "avg_pnl": 74.30144385026736,
+      "payoff": 13.622013171427824
+    },
+    {
+      "name": "W3_momentum_H5_SL20",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 51956.480000000316,
+      "pnl_oos": 14586.300000000032,
+      "wr_full": 0.3729946524064171,
+      "wr_oos": 0.35609756097560974,
+      "pf_full": 4.730211881199492,
+      "pf_oos": 4.533348836533292,
+      "sharpe_full": 5.873475297643669,
+      "sharpe_oos": 5.8114223662354405,
+      "max_dd_full": -719.239999999947,
+      "max_dd_oos": -338.65999999999804,
+      "avg_pnl": 69.46053475935827,
+      "payoff": 7.951503126460794
+    },
+    {
+      "name": "W3_momentum_H5_SL30",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 46155.980000000076,
+      "pnl_oos": 12862.30000000003,
+      "wr_full": 0.3729946524064171,
+      "wr_oos": 0.35609756097560974,
+      "pf_full": 3.339492099471541,
+      "pf_oos": 3.197864727332379,
+      "sharpe_full": 5.0880550930836534,
+      "sharpe_oos": 4.994308495333739,
+      "max_dd_full": -1039.2400000000416,
+      "max_dd_oos": -498.65999999999804,
+      "avg_pnl": 61.70585561497326,
+      "payoff": 5.613698188717393
+    },
+    {
+      "name": "W8_fadeC2_H5",
+      "n_trades_full": 890,
+      "n_trades_oos": 271,
+      "pnl_full": 30017.89999999961,
+      "pnl_oos": 11531.460000000048,
+      "wr_full": 0.3561797752808989,
+      "wr_oos": 0.33210332103321033,
+      "pf_full": 2.5326578002524314,
+      "pf_oos": 2.4537090731225195,
+      "sharpe_full": 3.4128569109507803,
+      "sharpe_oos": 3.763394470007632,
+      "max_dd_full": -1051.7999999999902,
+      "max_dd_oos": -1032.4199999999928,
+      "avg_pnl": 33.72797752808988,
+      "payoff": 4.57795873673389
+    },
+    {
+      "name": "W8_fadeC2_H1",
+      "n_trades_full": 890,
+      "n_trades_oos": 271,
+      "pnl_full": 32959.89999999947,
+      "pnl_oos": 9871.960000000037,
+      "wr_full": 0.36741573033707864,
+      "wr_oos": 0.4059040590405904,
+      "pf_full": 3.841218831407287,
+      "pf_oos": 3.3227376039377527,
+      "sharpe_full": 3.953406990306603,
+      "sharpe_oos": 3.8139217473302476,
+      "max_dd_full": -726.0799999999854,
+      "max_dd_oos": -440.62000000000035,
+      "avg_pnl": 37.033595505617974,
+      "payoff": 6.613474624104899
+    },
+    {
+      "name": "W3_fade_C1_H5",
+      "n_trades_full": 376,
+      "n_trades_oos": 115,
+      "pnl_full": 27233.75999999979,
+      "pnl_oos": 7538.40000000002,
+      "wr_full": 0.39095744680851063,
+      "wr_oos": 0.3652173913043478,
+      "pf_full": 4.844425999017499,
+      "pf_oos": 3.8313026756606523,
+      "sharpe_full": 5.965103981170522,
+      "sharpe_oos": 5.482438844567663,
+      "max_dd_full": -497.3799999999974,
+      "max_dd_oos": -303.15999999999804,
+      "avg_pnl": 72.43021276595744,
+      "payoff": 7.546758869217737
+    },
+    {
+      "name": "W8_fadeC2_H3",
+      "n_trades_full": 890,
+      "n_trades_oos": 271,
+      "pnl_full": 30109.39999999947,
+      "pnl_oos": 7173.960000000049,
+      "wr_full": 0.3550561797752809,
+      "wr_oos": 0.35424354243542433,
+      "pf_full": 2.7857676640910616,
+      "pf_oos": 2.1034315158040457,
+      "sharpe_full": 3.473063831557089,
+      "sharpe_oos": 2.7975917164093143,
+      "max_dd_full": -1258.1600000001345,
+      "max_dd_oos": -1258.1599999999817,
+      "avg_pnl": 33.83078651685393,
+      "payoff": 5.06022354173503
+    },
+    {
+      "name": "W3_fade_C1_H10",
+      "n_trades_full": 376,
+      "n_trades_oos": 115,
+      "pnl_full": 30890.259999999773,
+      "pnl_oos": 6637.90000000002,
+      "wr_full": 0.42819148936170215,
+      "wr_oos": 0.391304347826087,
+      "pf_full": 4.884296959484949,
+      "pf_oos": 3.181510450900488,
+      "sharpe_full": 6.343250953476894,
+      "sharpe_oos": 4.890542764541149,
+      "max_dd_full": -443.8399999999965,
+      "max_dd_oos": -338.1799999999985,
+      "avg_pnl": 82.15494680851063,
+      "payoff": 6.5225083620451185
+    },
+    {
+      "name": "W3_fade_C1_H3",
+      "n_trades_full": 376,
+      "n_trades_oos": 115,
+      "pnl_full": 24888.259999999806,
+      "pnl_oos": 6240.900000000011,
+      "wr_full": 0.3882978723404255,
+      "wr_oos": 0.3652173913043478,
+      "pf_full": 4.806592028387019,
+      "pf_oos": 3.6112333788001783,
+      "sharpe_full": 5.587318332608105,
+      "sharpe_oos": 4.809682476757,
+      "max_dd_full": -477.1800000000512,
+      "max_dd_oos": -333.60000000000014,
+      "avg_pnl": 66.19218085106381,
+      "payoff": 7.572028537869962
+    },
+    {
+      "name": "W3_momentum_H3",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 10517.980000000109,
+      "pnl_oos": 489.8000000000036,
+      "wr_full": 0.46524064171123,
+      "wr_oos": 0.4634146341463415,
+      "pf_full": 1.1914762156159548,
+      "pf_oos": 1.0291358582824237,
+      "sharpe_full": 0.8365201188628154,
+      "sharpe_oos": 0.1388426314077459,
+      "max_dd_full": -3592.2999999999847,
+      "max_dd_oos": -3592.2999999999984,
+      "avg_pnl": 14.061470588235286,
+      "payoff": 1.3695128915125918
+    },
+    {
+      "name": "W3_momentum_H10_TP30",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 1898.9800000000005,
+      "pnl_oos": 22.799999999998732,
+      "wr_full": 0.46390374331550804,
+      "wr_oos": 0.43414634146341463,
+      "pf_full": 1.1230368323934319,
+      "pf_oos": 1.0050056643043446,
+      "sharpe_full": 0.8687089699092226,
+      "sharpe_oos": 0.0377259122313963,
+      "max_dd_full": -762.5399999999993,
+      "max_dd_oos": -441.64000000000067,
+      "avg_pnl": 2.5387433155080177,
+      "payoff": 1.297803371152064
+    },
+    {
+      "name": "W3_momentum_H10",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 9270.480000000101,
+      "pnl_oos": -29.69999999999925,
+      "wr_full": 0.5040106951871658,
+      "wr_oos": 0.4975609756097561,
+      "pf_full": 1.1494683266089505,
+      "pf_oos": 0.9987043139800585,
+      "sharpe_full": 0.7018265714174919,
+      "sharpe_oos": -0.007263569615286269,
+      "max_dd_full": -5617.759999999997,
+      "max_dd_oos": -4600.76,
+      "avg_pnl": 12.393689839572188,
+      "payoff": 1.1311744009865268
+    },
+    {
+      "name": "W3_momentum_H5",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": 3347.4800000001114,
+      "pnl_oos": -862.1999999999998,
+      "wr_full": 0.4679144385026738,
+      "wr_oos": 0.48292682926829267,
+      "pf_full": 1.0529505202706397,
+      "pf_oos": 0.9566569008125696,
+      "sharpe_full": 0.25554110613315645,
+      "sharpe_oos": -0.22768535023405231,
+      "max_dd_full": -6042.179999999988,
+      "max_dd_oos": -3940.7599999999993,
+      "avg_pnl": 4.475240641711221,
+      "payoff": 1.1973551630506132
+    },
+    {
+      "name": "W3_momentum_H10_TP20",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": -3644.0199999999577,
+      "pnl_oos": -1497.2000000000016,
+      "wr_full": 0.46657754010695185,
+      "wr_oos": 0.43414634146341463,
+      "pf_full": 0.7626163134593988,
+      "pf_oos": 0.6712947106813851,
+      "sharpe_full": -2.0686150227989346,
+      "sharpe_oos": -3.075370042205613,
+      "max_dd_full": -4164.399999999958,
+      "max_dd_oos": -1528.5000000000016,
+      "avg_pnl": -4.8716844919786135,
+      "payoff": 0.87187366495788
+    },
+    {
+      "name": "W3_momentum_H10_TP10",
+      "n_trades_full": 748,
+      "n_trades_oos": 205,
+      "pnl_full": -8210.519999999884,
+      "pnl_oos": -2343.699999999996,
+      "wr_full": 0.49732620320855614,
+      "wr_oos": 0.4975609756097561,
+      "pf_full": 0.43615804155272647,
+      "pf_oos": 0.42825708305482507,
+      "sharpe_full": -6.044816293357034,
+      "sharpe_oos": -6.219399673007657,
+      "max_dd_full": -8283.559999999885,
+      "max_dd_oos": -2328.2999999999965,
+      "avg_pnl": -10.97663101604278,
+      "payoff": 0.44084791296727194
+    }
+  ],
+  "detailed_results": {
+    "W3_momentum_H3": {
+      "config": {
+        "W": 3,
+        "hold_bars": 3,
+        "stop_loss_pts": 0,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum: C3\u2192Long, C4\u2192Short, hold 3 bars"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 10517.980000000109,
+        "avg_pnl_per_trade": 14.061470588235286,
+        "win_rate": 0.46524064171123,
+        "profit_factor": 1.1914762156159548,
+        "avg_win": 188.07178160919543,
+        "avg_loss": 137.3275,
+        "payoff_ratio": 1.3695128915125918,
+        "max_drawdown": -3592.2999999999847,
+        "sharpe": 0.8365201188628154,
+        "max_consecutive_wins": 11,
+        "max_consecutive_losses": 12,
+        "avg_hold_bars": 2.9946524064171123,
+        "avg_mfe": 138.4418449197861,
+        "avg_mae": 145.79344919786095,
+        "exit_reasons": {
+          "time_exit": 746,
+          "gap": 2
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:00:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": 489.8000000000036,
+        "avg_pnl_per_trade": 2.3892682926829183,
+        "win_rate": 0.4634146341463415,
+        "profit_factor": 1.0291358582824237,
+        "avg_win": 182.11263157894734,
+        "avg_loss": 152.82636363636365,
+        "payoff_ratio": 1.191630993800701,
+        "max_drawdown": -3592.2999999999984,
+        "sharpe": 0.1388426314077459,
+        "max_consecutive_wins": 11,
+        "max_consecutive_losses": 8,
+        "avg_hold_bars": 3.0,
+        "avg_mfe": 143.5121951219512,
+        "avg_mae": 168.02439024390245,
+        "exit_reasons": {
+          "time_exit": 205
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:00:00.000000000"
+      }
+    },
+    "W3_momentum_H5": {
+      "config": {
+        "W": 3,
+        "hold_bars": 5,
+        "stop_loss_pts": 0,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum: C3\u2192Long, C4\u2192Short, hold 5 bars"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 3347.4800000001114,
+        "avg_pnl_per_trade": 4.475240641711221,
+        "win_rate": 0.4679144385026738,
+        "profit_factor": 1.0529505202706397,
+        "avg_win": 190.18999999999997,
+        "avg_loss": 158.8417587939699,
+        "payoff_ratio": 1.1973551630506132,
+        "max_drawdown": -6042.179999999988,
+        "sharpe": 0.25554110613315645,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 8,
+        "avg_hold_bars": 4.989304812834225,
+        "avg_mfe": 161.37366310160428,
+        "avg_mae": 178.3542780748663,
+        "exit_reasons": {
+          "time_exit": 746,
+          "gap": 2
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": -862.1999999999998,
+        "avg_pnl_per_trade": -4.205853658536593,
+        "win_rate": 0.48292682926829267,
+        "profit_factor": 0.9566569008125696,
+        "avg_win": 192.2246464646464,
+        "avg_loss": 187.6645283018868,
+        "payoff_ratio": 1.0242993079407312,
+        "max_drawdown": -3940.7599999999993,
+        "sharpe": -0.22768535023405231,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 5.0,
+        "avg_mfe": 173.41951219512194,
+        "avg_mae": 195.66829268292682,
+        "exit_reasons": {
+          "time_exit": 205
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      }
+    },
+    "W3_momentum_H10": {
+      "config": {
+        "W": 3,
+        "hold_bars": 10,
+        "stop_loss_pts": 0,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum: C3\u2192Long, C4\u2192Short, hold 10 bars"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 9270.480000000101,
+        "avg_pnl_per_trade": 12.393689839572188,
+        "win_rate": 0.5040106951871658,
+        "profit_factor": 1.1494683266089505,
+        "avg_win": 189.1074801061008,
+        "avg_loss": 167.1780053908356,
+        "payoff_ratio": 1.1311744009865268,
+        "max_drawdown": -5617.759999999997,
+        "sharpe": 0.7018265714174919,
+        "max_consecutive_wins": 8,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 9.93048128342246,
+        "avg_mfe": 179.1931818181818,
+        "avg_mae": 220.9846256684492,
+        "exit_reasons": {
+          "time_exit": 739,
+          "gap": 9
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:07:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": -29.69999999999925,
+        "avg_pnl_per_trade": -0.14487804878049246,
+        "win_rate": 0.4975609756097561,
+        "profit_factor": 0.9987043139800585,
+        "avg_win": 224.43647058823518,
+        "avg_loss": 222.54582524271856,
+        "payoff_ratio": 1.0084955327445688,
+        "max_drawdown": -4600.76,
+        "sharpe": -0.007263569615286269,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 9.975609756097562,
+        "avg_mfe": 191.7439024390244,
+        "avg_mae": 237.74878048780488,
+        "exit_reasons": {
+          "time_exit": 204,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:07:00.000000000"
+      }
+    },
+    "W3_momentum_H5_SL10": {
+      "config": {
+        "W": 3,
+        "hold_bars": 5,
+        "stop_loss_pts": 10,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum H=5 with SL=10pts"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 55577.48000000036,
+        "avg_pnl_per_trade": 74.30144385026736,
+        "win_rate": 0.3622994652406417,
+        "profit_factor": 7.7391311728657035,
+        "avg_win": 235.51461254612545,
+        "avg_loss": 17.289266247379455,
+        "payoff_ratio": 13.622013171427824,
+        "max_drawdown": -386.23999999994703,
+        "sharpe": 6.489059086772277,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 11,
+        "avg_hold_bars": 3.72192513368984,
+        "avg_mfe": 153.9077540106952,
+        "avg_mae": 171.6677807486631,
+        "exit_reasons": {
+          "time_exit": 408,
+          "stop_loss": 339,
+          "gap": 1
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": 15937.300000000032,
+        "avg_pnl_per_trade": 77.74292682926828,
+        "win_rate": 0.3463414634146341,
+        "profit_factor": 7.5500419207943565,
+        "avg_win": 258.73887323943654,
+        "avg_loss": 18.157910447761193,
+        "payoff_ratio": 14.249374892766813,
+        "max_drawdown": -218.12,
+        "sharpe": 6.533758797944614,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.4634146341463414,
+        "avg_mfe": 162.54390243902438,
+        "avg_mae": 191.24634146341464,
+        "exit_reasons": {
+          "stop_loss": 103,
+          "time_exit": 102
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      }
+    },
+    "W3_momentum_H5_SL20": {
+      "config": {
+        "W": 3,
+        "hold_bars": 5,
+        "stop_loss_pts": 20,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum H=5 with SL=20pts"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 51956.480000000316,
+        "avg_pnl_per_trade": 69.46053475935827,
+        "win_rate": 0.3729946524064171,
+        "profit_factor": 4.730211881199492,
+        "avg_win": 236.14709677419353,
+        "avg_loss": 29.69842217484009,
+        "payoff_ratio": 7.951503126460794,
+        "max_drawdown": -719.239999999947,
+        "sharpe": 5.873475297643669,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 11,
+        "avg_hold_bars": 3.8863636363636362,
+        "avg_mfe": 158.8048128342246,
+        "avg_mae": 176.88636363636363,
+        "exit_reasons": {
+          "time_exit": 451,
+          "stop_loss": 296,
+          "gap": 1
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": 14586.300000000032,
+        "avg_pnl_per_trade": 71.15268292682927,
+        "win_rate": 0.35609756097560974,
+        "profit_factor": 4.533348836533292,
+        "avg_win": 256.36273972602737,
+        "avg_loss": 31.274090909090905,
+        "payoff_ratio": 8.197288307156088,
+        "max_drawdown": -338.65999999999804,
+        "sharpe": 5.8114223662354405,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.731707317073171,
+        "avg_mfe": 169.00243902439024,
+        "avg_mae": 191.8560975609756,
+        "exit_reasons": {
+          "time_exit": 117,
+          "stop_loss": 88
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      }
+    },
+    "W3_momentum_H5_SL30": {
+      "config": {
+        "W": 3,
+        "hold_bars": 5,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=3 momentum H=5 with SL=30pts"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 46155.980000000076,
+        "avg_pnl_per_trade": 61.70585561497326,
+        "win_rate": 0.3729946524064171,
+        "profit_factor": 3.339492099471541,
+        "avg_win": 236.14709677419353,
+        "avg_loss": 42.06622601279317,
+        "payoff_ratio": 5.613698188717393,
+        "max_drawdown": -1039.2400000000416,
+        "sharpe": 5.0880550930836534,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 11,
+        "avg_hold_bars": 3.9037433155080214,
+        "avg_mfe": 159.3422459893048,
+        "avg_mae": 176.951871657754,
+        "exit_reasons": {
+          "time_exit": 457,
+          "stop_loss": 290,
+          "gap": 1
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": 12862.30000000003,
+        "avg_pnl_per_trade": 62.74292682926829,
+        "win_rate": 0.35609756097560974,
+        "profit_factor": 3.197864727332379,
+        "avg_win": 256.36273972602737,
+        "avg_loss": 44.334696969696964,
+        "payoff_ratio": 5.782440328874986,
+        "max_drawdown": -498.65999999999804,
+        "sharpe": 4.994308495333739,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.7365853658536587,
+        "avg_mfe": 169.00243902439024,
+        "avg_mae": 191.99268292682927,
+        "exit_reasons": {
+          "time_exit": 119,
+          "stop_loss": 86
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T06:02:00.000000000"
+      }
+    },
+    "W3_momentum_H10_TP10": {
+      "config": {
+        "W": 3,
+        "hold_bars": 10,
+        "stop_loss_pts": 20,
+        "take_profit_pts": 10,
+        "description": "W=3 momentum H=10 SL=20 TP=10"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": -8210.519999999884,
+        "avg_pnl_per_trade": -10.97663101604278,
+        "win_rate": 0.49732620320855614,
+        "profit_factor": 0.43615804155272647,
+        "avg_win": 17.073172043010754,
+        "avg_loss": 38.72803191489362,
+        "payoff_ratio": 0.44084791296727194,
+        "max_drawdown": -8283.559999999885,
+        "sharpe": -6.044816293357034,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 8,
+        "avg_hold_bars": 3.4585561497326203,
+        "avg_mfe": 162.37032085561498,
+        "avg_mae": 201.875,
+        "exit_reasons": {
+          "take_profit": 339,
+          "stop_loss": 338,
+          "time_exit": 67,
+          "gap": 4
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": -2343.699999999996,
+        "avg_pnl_per_trade": -11.43268292682927,
+        "win_rate": 0.4975609756097561,
+        "profit_factor": 0.42825708305482507,
+        "avg_win": 17.21098039215686,
+        "avg_loss": 39.79825242718446,
+        "payoff_ratio": 0.43245568190830375,
+        "max_drawdown": -2328.2999999999965,
+        "sharpe": -6.219399673007657,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 3.097560975609756,
+        "avg_mfe": 162.03658536585365,
+        "avg_mae": 203.9390243902439,
+        "exit_reasons": {
+          "stop_loss": 97,
+          "take_profit": 95,
+          "time_exit": 12,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      }
+    },
+    "W3_momentum_H10_TP20": {
+      "config": {
+        "W": 3,
+        "hold_bars": 10,
+        "stop_loss_pts": 20,
+        "take_profit_pts": 20,
+        "description": "W=3 momentum H=10 SL=20 TP=20"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": -3644.0199999999577,
+        "avg_pnl_per_trade": -4.8716844919786135,
+        "win_rate": 0.46657754010695185,
+        "profit_factor": 0.7626163134593988,
+        "avg_win": 33.54366762177651,
+        "avg_loss": 38.47308270676692,
+        "payoff_ratio": 0.87187366495788,
+        "max_drawdown": -4164.399999999958,
+        "sharpe": -2.0686150227989346,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.767379679144385,
+        "avg_mfe": 167.97192513368984,
+        "avg_mae": 211.82754010695186,
+        "exit_reasons": {
+          "take_profit": 290,
+          "stop_loss": 355,
+          "time_exit": 99,
+          "gap": 4
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": -1497.2000000000016,
+        "avg_pnl_per_trade": -7.303414634146345,
+        "win_rate": 0.43414634146341463,
+        "profit_factor": 0.6712947106813851,
+        "avg_win": 34.35550561797753,
+        "avg_loss": 39.26586206896551,
+        "payoff_ratio": 0.8749459150454009,
+        "max_drawdown": -1528.5000000000016,
+        "sharpe": -3.075370042205613,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.5707317073170732,
+        "avg_mfe": 175.85853658536584,
+        "avg_mae": 225.11219512195123,
+        "exit_reasons": {
+          "stop_loss": 107,
+          "take_profit": 76,
+          "time_exit": 21,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      }
+    },
+    "W3_momentum_H10_TP30": {
+      "config": {
+        "W": 3,
+        "hold_bars": 10,
+        "stop_loss_pts": 20,
+        "take_profit_pts": 30,
+        "description": "W=3 momentum H=10 SL=20 TP=30"
+      },
+      "signal_clusters": {
+        "3": "long",
+        "4": "short"
+      },
+      "full": {
+        "n_trades": 748,
+        "total_pnl": 1898.9800000000005,
+        "avg_pnl_per_trade": 2.5387433155080177,
+        "win_rate": 0.46390374331550804,
+        "profit_factor": 1.1230368323934319,
+        "avg_win": 49.95164265129684,
+        "avg_loss": 38.48937655860349,
+        "payoff_ratio": 1.297803371152064,
+        "max_drawdown": -762.5399999999993,
+        "sharpe": 0.8687089699092226,
+        "max_consecutive_wins": 9,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.814171122994652,
+        "avg_mfe": 169.9625668449198,
+        "avg_mae": 212.4331550802139,
+        "exit_reasons": {
+          "take_profit": 286,
+          "stop_loss": 357,
+          "time_exit": 101,
+          "gap": 4
+        },
+        "first_trade": "2022-09-08T19:07:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      },
+      "oos": {
+        "n_trades": 205,
+        "total_pnl": 22.799999999998732,
+        "avg_pnl_per_trade": 0.1112195121951191,
+        "win_rate": 0.43414634146341463,
+        "profit_factor": 1.0050056643043446,
+        "avg_win": 51.43415730337079,
+        "avg_loss": 39.26586206896551,
+        "payoff_ratio": 1.309895023138247,
+        "max_drawdown": -441.64000000000067,
+        "sharpe": 0.0377259122313963,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.604878048780488,
+        "avg_mfe": 180.41463414634146,
+        "avg_mae": 225.11219512195123,
+        "exit_reasons": {
+          "stop_loss": 107,
+          "take_profit": 76,
+          "time_exit": 21,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T19:24:00.000000000",
+        "last_trade": "2025-12-16T05:58:00.000000000"
+      }
+    },
+    "W3_fade_C1_H3": {
+      "config": {
+        "W": 3,
+        "hold_bars": 3,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=3 fade C1 (strong up\u2192short) H=3 SL=30"
+      },
+      "signal_clusters": {
+        "1": "short"
+      },
+      "full": {
+        "n_trades": 376,
+        "total_pnl": 24888.259999999806,
+        "avg_pnl_per_trade": 66.19218085106381,
+        "win_rate": 0.3882978723404255,
+        "profit_factor": 4.806592028387019,
+        "avg_win": 215.2497260273973,
+        "avg_loss": 28.426956521739125,
+        "payoff_ratio": 7.572028537869962,
+        "max_drawdown": -477.1800000000512,
+        "sharpe": 5.587318332608105,
+        "max_consecutive_wins": 4,
+        "max_consecutive_losses": 10,
+        "avg_hold_bars": 2.63031914893617,
+        "avg_mfe": 183.13962765957447,
+        "avg_mae": 110.73537234042553,
+        "exit_reasons": {
+          "time_exit": 288,
+          "stop_loss": 87,
+          "gap": 1
+        },
+        "first_trade": "2022-12-12T21:47:00.000000000",
+        "last_trade": "2025-12-15T23:15:00.000000000"
+      },
+      "oos": {
+        "n_trades": 115,
+        "total_pnl": 6240.900000000011,
+        "avg_pnl_per_trade": 54.26869565217391,
+        "win_rate": 0.3652173913043478,
+        "profit_factor": 3.6112333788001783,
+        "avg_win": 205.49809523809523,
+        "avg_loss": 32.739999999999995,
+        "payoff_ratio": 6.276667539343166,
+        "max_drawdown": -333.60000000000014,
+        "sharpe": 4.809682476757,
+        "max_consecutive_wins": 3,
+        "max_consecutive_losses": 10,
+        "avg_hold_bars": 2.5391304347826087,
+        "avg_mfe": 185.34347826086957,
+        "avg_mae": 140.6,
+        "exit_reasons": {
+          "stop_loss": 32,
+          "time_exit": 83
+        },
+        "first_trade": "2025-03-16T19:14:00.000000000",
+        "last_trade": "2025-12-15T23:15:00.000000000"
+      }
+    },
+    "W3_fade_C1_H5": {
+      "config": {
+        "W": 3,
+        "hold_bars": 5,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=3 fade C1 (strong up\u2192short) H=5 SL=30"
+      },
+      "signal_clusters": {
+        "1": "short"
+      },
+      "full": {
+        "n_trades": 376,
+        "total_pnl": 27233.75999999979,
+        "avg_pnl_per_trade": 72.43021276595744,
+        "win_rate": 0.39095744680851063,
+        "profit_factor": 4.844425999017499,
+        "avg_win": 233.4538775510204,
+        "avg_loss": 30.9343231441048,
+        "payoff_ratio": 7.546758869217737,
+        "max_drawdown": -497.3799999999974,
+        "sharpe": 5.965103981170522,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 4.154255319148936,
+        "avg_mfe": 214.47340425531914,
+        "avg_mae": 118.01196808510639,
+        "exit_reasons": {
+          "time_exit": 280,
+          "stop_loss": 95,
+          "gap": 1
+        },
+        "first_trade": "2022-12-12T21:47:00.000000000",
+        "last_trade": "2025-12-15T23:17:00.000000000"
+      },
+      "oos": {
+        "n_trades": 115,
+        "total_pnl": 7538.40000000002,
+        "avg_pnl_per_trade": 65.55130434782609,
+        "win_rate": 0.3652173913043478,
+        "profit_factor": 3.8313026756606523,
+        "avg_win": 242.8790476190476,
+        "avg_loss": 36.47287671232877,
+        "payoff_ratio": 6.659168936267323,
+        "max_drawdown": -303.15999999999804,
+        "sharpe": 5.482438844567663,
+        "max_consecutive_wins": 5,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 3.965217391304348,
+        "avg_mfe": 201.42608695652174,
+        "avg_mae": 149.5391304347826,
+        "exit_reasons": {
+          "stop_loss": 36,
+          "time_exit": 79
+        },
+        "first_trade": "2025-03-16T19:14:00.000000000",
+        "last_trade": "2025-12-15T23:17:00.000000000"
+      }
+    },
+    "W3_fade_C1_H10": {
+      "config": {
+        "W": 3,
+        "hold_bars": 10,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=3 fade C1 (strong up\u2192short) H=10 SL=30"
+      },
+      "signal_clusters": {
+        "1": "short"
+      },
+      "full": {
+        "n_trades": 376,
+        "total_pnl": 30890.259999999773,
+        "avg_pnl_per_trade": 82.15494680851063,
+        "win_rate": 0.42819148936170215,
+        "profit_factor": 4.884296959484949,
+        "avg_win": 241.26,
+        "avg_loss": 36.98883720930232,
+        "payoff_ratio": 6.5225083620451185,
+        "max_drawdown": -443.8399999999965,
+        "sharpe": 6.343250953476894,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 8,
+        "avg_hold_bars": 7.8111702127659575,
+        "avg_mfe": 261.7300531914894,
+        "avg_mae": 126.93882978723404,
+        "exit_reasons": {
+          "time_exit": 269,
+          "stop_loss": 106,
+          "gap": 1
+        },
+        "first_trade": "2022-12-12T21:47:00.000000000",
+        "last_trade": "2025-12-15T23:22:00.000000000"
+      },
+      "oos": {
+        "n_trades": 115,
+        "total_pnl": 6637.90000000002,
+        "avg_pnl_per_trade": 57.72086956521739,
+        "win_rate": 0.391304347826087,
+        "profit_factor": 3.181510450900488,
+        "avg_win": 215.1266666666667,
+        "avg_loss": 43.46857142857141,
+        "payoff_ratio": 4.949016256956315,
+        "max_drawdown": -338.1799999999985,
+        "sharpe": 4.890542764541149,
+        "max_consecutive_wins": 5,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 7.260869565217392,
+        "avg_mfe": 246.94782608695652,
+        "avg_mae": 168.7913043478261,
+        "exit_reasons": {
+          "stop_loss": 43,
+          "time_exit": 72
+        },
+        "first_trade": "2025-03-16T19:14:00.000000000",
+        "last_trade": "2025-12-15T23:22:00.000000000"
+      }
+    },
+    "W5_C2long_H5": {
+      "config": {
+        "W": 5,
+        "hold_bars": 5,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=5 C2\u2192Long H=5 SL=30"
+      },
+      "signal_clusters": {
+        "2": "long"
+      },
+      "full": {
+        "n_trades": 994,
+        "total_pnl": 55698.440000000235,
+        "avg_pnl_per_trade": 56.03464788732394,
+        "win_rate": 0.4245472837022133,
+        "profit_factor": 3.5268337296838244,
+        "avg_win": 184.22090047393365,
+        "avg_loss": 38.53632867132867,
+        "payoff_ratio": 4.780447614642529,
+        "max_drawdown": -805.2400000000816,
+        "sharpe": 4.898934859079997,
+        "max_consecutive_wins": 8,
+        "max_consecutive_losses": 13,
+        "avg_hold_bars": 4.106639839034205,
+        "avg_mfe": 145.29778672032194,
+        "avg_mae": 143.67404426559355,
+        "exit_reasons": {
+          "stop_loss": 317,
+          "time_exit": 676,
+          "gap": 1
+        },
+        "first_trade": "2022-09-08T18:34:00.000000000",
+        "last_trade": "2025-12-16T06:04:00.000000000"
+      },
+      "oos": {
+        "n_trades": 264,
+        "total_pnl": 19908.13999999998,
+        "avg_pnl_per_trade": 75.40962121212121,
+        "win_rate": 0.48484848484848486,
+        "profit_factor": 4.6965226045558195,
+        "avg_win": 197.60765625000005,
+        "avg_loss": 39.60029411764706,
+        "payoff_ratio": 4.9900552673405585,
+        "max_drawdown": -518.2799999999952,
+        "sharpe": 6.0836960169631285,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 7,
+        "avg_hold_bars": 4.162878787878788,
+        "avg_mfe": 181.57386363636363,
+        "avg_mae": 143.11363636363637,
+        "exit_reasons": {
+          "time_exit": 187,
+          "stop_loss": 76,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T19:06:00.000000000",
+        "last_trade": "2025-12-16T06:04:00.000000000"
+      }
+    },
+    "W5_C2long_H10": {
+      "config": {
+        "W": 5,
+        "hold_bars": 10,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=5 C2\u2192Long H=10 SL=30"
+      },
+      "signal_clusters": {
+        "2": "long"
+      },
+      "full": {
+        "n_trades": 994,
+        "total_pnl": 47782.440000000046,
+        "avg_pnl_per_trade": 48.07086519114688,
+        "win_rate": 0.38028169014084506,
+        "profit_factor": 2.749770029412799,
+        "avg_win": 198.6515343915344,
+        "avg_loss": 44.33090909090909,
+        "payoff_ratio": 4.481106714598635,
+        "max_drawdown": -874.200000000048,
+        "sharpe": 4.201565038845503,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 13,
+        "avg_hold_bars": 7.309859154929577,
+        "avg_mfe": 167.46830985915494,
+        "avg_mae": 180.46780684104627,
+        "exit_reasons": {
+          "stop_loss": 400,
+          "time_exit": 589,
+          "gap": 5
+        },
+        "first_trade": "2022-09-08T18:34:00.000000000",
+        "last_trade": "2025-12-16T06:09:00.000000000"
+      },
+      "oos": {
+        "n_trades": 264,
+        "total_pnl": 18520.640000000014,
+        "avg_pnl_per_trade": 70.1539393939394,
+        "win_rate": 0.4318181818181818,
+        "profit_factor": 3.7476656034418823,
+        "avg_win": 221.58894736842106,
+        "avg_loss": 44.93666666666665,
+        "payoff_ratio": 4.931138951897213,
+        "max_drawdown": -742.4199999999928,
+        "sharpe": 5.5782343893756705,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 7.481060606060606,
+        "avg_mfe": 217.40151515151516,
+        "avg_mae": 179.86742424242425,
+        "exit_reasons": {
+          "time_exit": 164,
+          "stop_loss": 98,
+          "gap": 2
+        },
+        "first_trade": "2025-03-16T19:06:00.000000000",
+        "last_trade": "2025-12-16T06:09:00.000000000"
+      }
+    },
+    "W5_C2long_H20": {
+      "config": {
+        "W": 5,
+        "hold_bars": 20,
+        "stop_loss_pts": 30,
+        "take_profit_pts": 0,
+        "description": "W=5 C2\u2192Long H=20 SL=30"
+      },
+      "signal_clusters": {
+        "2": "long"
+      },
+      "full": {
+        "n_trades": 994,
+        "total_pnl": 46889.939999999886,
+        "avg_pnl_per_trade": 47.172977867203215,
+        "win_rate": 0.36519114688128773,
+        "profit_factor": 2.4895180867562017,
+        "avg_win": 215.89498622589534,
+        "avg_loss": 49.88896988906497,
+        "payoff_ratio": 4.327509401496317,
+        "max_drawdown": -1309.4800000000432,
+        "sharpe": 4.080686488817428,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 18,
+        "avg_hold_bars": 12.872233400402415,
+        "avg_mfe": 178.61217303822937,
+        "avg_mae": 205.37474849094568,
+        "exit_reasons": {
+          "stop_loss": 468,
+          "time_exit": 516,
+          "gap": 10
+        },
+        "first_trade": "2022-09-08T18:34:00.000000000",
+        "last_trade": "2025-12-16T06:19:00.000000000"
+      },
+      "oos": {
+        "n_trades": 264,
+        "total_pnl": 18935.14,
+        "avg_pnl_per_trade": 71.72401515151515,
+        "win_rate": 0.4128787878787879,
+        "profit_factor": 3.460003637686432,
+        "avg_win": 244.33339449541285,
+        "avg_loss": 49.65935483870967,
+        "payoff_ratio": 4.920188659095385,
+        "max_drawdown": -716.2999999999956,
+        "sharpe": 5.602552906661919,
+        "max_consecutive_wins": 5,
+        "max_consecutive_losses": 8,
+        "avg_hold_bars": 13.287878787878787,
+        "avg_mfe": 229.3598484848485,
+        "avg_mae": 199.8409090909091,
+        "exit_reasons": {
+          "time_exit": 144,
+          "stop_loss": 115,
+          "gap": 5
+        },
+        "first_trade": "2025-03-16T19:06:00.000000000",
+        "last_trade": "2025-12-16T06:19:00.000000000"
+      }
+    },
+    "W8_fadeC2_H1": {
+      "config": {
+        "W": 8,
+        "hold_bars": 1,
+        "stop_loss_pts": 40,
+        "take_profit_pts": 0,
+        "description": "W=8 fade C2 (large range\u2192short) H=1 SL=40"
+      },
+      "signal_clusters": {
+        "2": "short"
+      },
+      "full": {
+        "n_trades": 890,
+        "total_pnl": 32959.89999999947,
+        "avg_pnl_per_trade": 37.033595505617974,
+        "win_rate": 0.36741573033707864,
+        "profit_factor": 3.841218831407287,
+        "avg_win": 136.27070336391435,
+        "avg_loss": 20.60500888099467,
+        "payoff_ratio": 6.613474624104899,
+        "max_drawdown": -726.0799999999854,
+        "sharpe": 3.953406990306603,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 14,
+        "avg_hold_bars": 0.9977528089887641,
+        "avg_mfe": 53.976404494382024,
+        "avg_mae": 59.81460674157304,
+        "exit_reasons": {
+          "time_exit": 780,
+          "stop_loss": 108,
+          "gap": 2
+        },
+        "first_trade": "2022-09-08T19:12:00.000000000",
+        "last_trade": "2025-12-15T22:48:00.000000000"
+      },
+      "oos": {
+        "n_trades": 271,
+        "total_pnl": 9871.960000000037,
+        "avg_pnl_per_trade": 36.42789667896679,
+        "win_rate": 0.4059040590405904,
+        "profit_factor": 3.3227376039377527,
+        "avg_win": 128.3827272727273,
+        "avg_loss": 26.398385093167704,
+        "payoff_ratio": 4.863279583945257,
+        "max_drawdown": -440.62000000000035,
+        "sharpe": 3.8139217473302476,
+        "max_consecutive_wins": 5,
+        "max_consecutive_losses": 6,
+        "avg_hold_bars": 0.996309963099631,
+        "avg_mfe": 56.80442804428044,
+        "avg_mae": 75.7140221402214,
+        "exit_reasons": {
+          "time_exit": 230,
+          "stop_loss": 40,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T20:19:00.000000000",
+        "last_trade": "2025-12-15T22:48:00.000000000"
+      }
+    },
+    "W8_fadeC2_H3": {
+      "config": {
+        "W": 8,
+        "hold_bars": 3,
+        "stop_loss_pts": 40,
+        "take_profit_pts": 0,
+        "description": "W=8 fade C2 (large range\u2192short) H=3 SL=40"
+      },
+      "signal_clusters": {
+        "2": "short"
+      },
+      "full": {
+        "n_trades": 890,
+        "total_pnl": 30109.39999999947,
+        "avg_pnl_per_trade": 33.83078651685393,
+        "win_rate": 0.3550561797752809,
+        "profit_factor": 2.7857676640910616,
+        "avg_win": 148.63974683544305,
+        "avg_loss": 29.374146341463412,
+        "payoff_ratio": 5.06022354173503,
+        "max_drawdown": -1258.1600000001345,
+        "sharpe": 3.473063831557089,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 24,
+        "avg_hold_bars": 2.710112359550562,
+        "avg_mfe": 109.79438202247191,
+        "avg_mae": 91.73595505617978,
+        "exit_reasons": {
+          "time_exit": 722,
+          "stop_loss": 165,
+          "gap": 3
+        },
+        "first_trade": "2022-09-08T19:12:00.000000000",
+        "last_trade": "2025-12-15T22:50:00.000000000"
+      },
+      "oos": {
+        "n_trades": 271,
+        "total_pnl": 7173.960000000049,
+        "avg_pnl_per_trade": 26.472177121771207,
+        "win_rate": 0.35424354243542433,
+        "profit_factor": 2.1034315158040457,
+        "avg_win": 142.45270833333333,
+        "avg_loss": 37.15142857142856,
+        "payoff_ratio": 3.8343803673511254,
+        "max_drawdown": -1258.1599999999817,
+        "sharpe": 2.7975917164093143,
+        "max_consecutive_wins": 4,
+        "max_consecutive_losses": 13,
+        "avg_hold_bars": 2.6346863468634685,
+        "avg_mfe": 124.5479704797048,
+        "avg_mae": 121.90036900369003,
+        "exit_reasons": {
+          "time_exit": 205,
+          "stop_loss": 65,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T20:19:00.000000000",
+        "last_trade": "2025-12-15T22:50:00.000000000"
+      }
+    },
+    "W8_fadeC2_H5": {
+      "config": {
+        "W": 8,
+        "hold_bars": 5,
+        "stop_loss_pts": 40,
+        "take_profit_pts": 0,
+        "description": "W=8 fade C2 (large range\u2192short) H=5 SL=40"
+      },
+      "signal_clusters": {
+        "2": "short"
+      },
+      "full": {
+        "n_trades": 890,
+        "total_pnl": 30017.89999999961,
+        "avg_pnl_per_trade": 33.72797752808988,
+        "win_rate": 0.3561797752808989,
+        "profit_factor": 2.5326578002524314,
+        "avg_win": 156.47766561514192,
+        "avg_loss": 34.18066317626526,
+        "payoff_ratio": 4.57795873673389,
+        "max_drawdown": -1051.7999999999902,
+        "sharpe": 3.4128569109507803,
+        "max_consecutive_wins": 6,
+        "max_consecutive_losses": 13,
+        "avg_hold_bars": 4.312359550561798,
+        "avg_mfe": 136.05449438202248,
+        "avg_mae": 108.11797752808988,
+        "exit_reasons": {
+          "time_exit": 693,
+          "stop_loss": 194,
+          "gap": 3
+        },
+        "first_trade": "2022-09-08T19:12:00.000000000",
+        "last_trade": "2025-12-15T22:52:00.000000000"
+      },
+      "oos": {
+        "n_trades": 271,
+        "total_pnl": 11531.460000000048,
+        "avg_pnl_per_trade": 42.551512915129145,
+        "win_rate": 0.33210332103321033,
+        "profit_factor": 2.4537090731225195,
+        "avg_win": 216.2655555555555,
+        "avg_loss": 43.82563535911601,
+        "payoff_ratio": 4.934681580390845,
+        "max_drawdown": -1032.4199999999928,
+        "sharpe": 3.763394470007632,
+        "max_consecutive_wins": 4,
+        "max_consecutive_losses": 9,
+        "avg_hold_bars": 4.107011070110701,
+        "avg_mfe": 157.47785977859778,
+        "avg_mae": 151.1070110701107,
+        "exit_reasons": {
+          "time_exit": 189,
+          "stop_loss": 81,
+          "gap": 1
+        },
+        "first_trade": "2025-03-16T20:19:00.000000000",
+        "last_trade": "2025-12-15T22:52:00.000000000"
+      }
+    }
+  }
+}
