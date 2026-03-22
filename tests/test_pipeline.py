@@ -14,6 +14,9 @@ from mnq_morphology.patterns import detect_patterns, PATTERN_REGISTRY
 from mnq_morphology.aggregator import aggregate
 from mnq_morphology.statistics import compute_forward_returns, pattern_stats, by_session
 from mnq_morphology.confluence import detect_confluence, confluence_stats, find_confluence_events
+from mnq_morphology.group_morphology import (
+    compute_window_features, classify_shape, group_forward_returns, Shape,
+)
 
 DATA_PATH = "data/glbx-mdp3-20210312-20260311.ohlcv-1m.parquet"
 
@@ -357,3 +360,87 @@ class TestConfluence:
         if len(events) > 0:
             assert "signal" in events.columns
             assert set(events["signal"].unique()) <= {"BULLISH", "BEARISH"}
+
+
+# ============================================================
+# Group morphology tests
+# ============================================================
+
+@pytest.fixture(scope="module")
+def group_sample(continuous):
+    """Use 50K bars for group morphology tests (speed)."""
+    return continuous.iloc[-50000:]
+
+
+class TestGroupMorphology:
+    def test_window_features_shape(self, group_sample):
+        feats = compute_window_features(group_sample, window=15, step=15)
+        # Non-overlapping: ~50000/15 ≈ 3333 windows
+        assert 3000 < len(feats) < 4000
+        assert "gm_slope" in feats.columns
+        assert "gm_r2" in feats.columns
+
+    def test_all_12_features_present(self, group_sample):
+        feats = compute_window_features(group_sample, window=15, step=15)
+        expected = [
+            "gm_slope", "gm_r2", "gm_compression", "gm_chop_ratio",
+            "gm_close_pos", "gm_vol_profile", "gm_high_pos", "gm_low_pos",
+            "gm_range", "gm_net_move", "gm_max_dd", "gm_max_runup",
+        ]
+        for f in expected:
+            assert f in feats.columns, f"Missing: {f}"
+
+    def test_r2_bounds(self, group_sample):
+        feats = compute_window_features(group_sample, window=15, step=15)
+        assert (feats["gm_r2"] >= -0.01).all()  # float tolerance
+        assert (feats["gm_r2"] <= 1.01).all()
+
+    def test_close_pos_bounds(self, group_sample):
+        feats = compute_window_features(group_sample, window=15, step=15)
+        assert (feats["gm_close_pos"] >= 0).all()
+        assert (feats["gm_close_pos"] <= 1).all()
+
+    def test_classify_returns_valid_shapes(self, group_sample):
+        feats = compute_window_features(group_sample, window=30, step=30)
+        shapes = classify_shape(feats)
+        valid = {s for s in Shape}
+        assert all(s in valid for s in shapes.unique())
+
+    def test_shape_distribution_not_all_neutral(self, group_sample):
+        """With 50K bars, should detect multiple shape types."""
+        feats = compute_window_features(group_sample, window=15, step=5)
+        shapes = classify_shape(feats)
+        unique_shapes = shapes.unique()
+        assert len(unique_shapes) >= 5
+
+    def test_forward_returns_computed(self, group_sample):
+        feats = compute_window_features(group_sample, window=15, step=15)
+        shapes = classify_shape(feats)
+        stats = group_forward_returns(group_sample, feats, shapes, forward_windows=(15,))
+        assert len(stats) > 0
+        assert "n" in stats.columns
+        assert "fwd15_mean" in stats.columns
+
+    def test_different_windows_different_results(self, group_sample):
+        f15 = compute_window_features(group_sample, window=15, step=15)
+        f60 = compute_window_features(group_sample, window=60, step=60)
+        # 60-bar windows should have fewer rows
+        assert len(f60) < len(f15)
+
+    def test_exhaustion_down_has_positive_fwd(self, continuous):
+        """Real data: exhaustion_down (60-bar) → strong positive reversal."""
+        feats = compute_window_features(continuous, window=60, step=5)
+        shapes = classify_shape(feats)
+        stats = group_forward_returns(continuous, feats, shapes, forward_windows=(60,))
+        if Shape.EXHAUSTION_DOWN.value in stats.index:
+            mean = stats.loc[Shape.EXHAUSTION_DOWN.value, "fwd60_mean"]
+            assert mean > 0  # confirmed: +10.56 pts
+
+    def test_momentum_burst_down_continues(self, continuous):
+        """Real data: momentum_burst_down (60-bar) → negative continuation."""
+        feats = compute_window_features(continuous, window=60, step=5)
+        shapes = classify_shape(feats)
+        stats = group_forward_returns(continuous, feats, shapes, forward_windows=(60,))
+        if Shape.MOMENTUM_BURST_DOWN.value in stats.index:
+            mean = stats.loc[Shape.MOMENTUM_BURST_DOWN.value, "fwd60_mean"]
+            assert mean < 0  # confirmed: -5.84 pts
