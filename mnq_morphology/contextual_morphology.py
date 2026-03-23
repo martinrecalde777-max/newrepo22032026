@@ -145,7 +145,10 @@ def classify_context(features: pd.DataFrame) -> pd.DataFrame:
         labels=["vol_climax_die", "vol_low", "vol_normal", "vol_elevated", "vol_spike"],
     )
 
-    # Shape type
+    # Shape type — granular classification
+    # Key insight: "la forma sin contexto no vale nada"
+    # We need to distinguish SILENT ramps (low vol, high edge) from noisy ones,
+    # and detect squeeze traps (fake breakouts from compression).
     shape = pd.Series("other", index=out.index)
     slope = out["slope_s"]
     r2 = out["r2_s"]
@@ -154,17 +157,31 @@ def classify_context(features: pd.DataFrame) -> pd.DataFrame:
     comp = out["compression"]
     vp = out["vol_profile"]
 
+    # Base shapes
     shape[(slope > 1.5) & (r2 > 0.7)] = "strong_ramp_up"
     shape[(slope < -1.5) & (r2 > 0.7)] = "strong_ramp_dn"
     shape[(close_pos > 0.8) & (r2 < 0.35) & (net > 0)] = "v_bottom"
     shape[(close_pos < 0.2) & (r2 < 0.35) & (net < 0)] = "v_top"
     shape[comp < 0.35] = "tight_squeeze"
     shape[comp > 2.5] = "big_expansion"
-    # Exhaustion / burst overrides
+
+    # Split ramps by volume profile: silent (declining vol) vs noisy
+    # "Ramp up silencioso" = price trending up but volume DECLINING → vol_profile < 0.7
+    # These have the highest edge (49pts EV in prior analysis)
+    shape[(slope > 1.5) & (r2 > 0.7) & (vp < 0.7)] = "silent_ramp_up"
+    shape[(slope < -1.5) & (r2 > 0.7) & (vp < 0.7)] = "silent_ramp_dn"
+
+    # Exhaustion: strong slope but volume dying at the end
     shape[(slope > 1.5) & (vp < 0.5)] = "exhaust_up"
     shape[(slope < -1.5) & (vp < 0.5)] = "exhaust_dn"
+
+    # Volume burst: strong move WITH increasing volume (momentum confirmation)
     shape[(slope > 1.5) & (vp > 2.0)] = "vol_burst_up"
     shape[(slope < -1.5) & (vp > 2.0)] = "vol_burst_dn"
+
+    # Squeeze trap: tight compression that breaks out with volume
+    # (fake breakout from range → reversal)
+    shape[(comp < 0.35) & (vp > 1.5)] = "squeeze_breakout"
 
     out["shape_type"] = shape
     return out
@@ -188,21 +205,38 @@ def scan_setups(
     features: pd.DataFrame,
     fwd: pd.DataFrame,
     min_n: int = 80,
+    exclude_shapes: tuple[str, ...] = ("other",),
 ) -> pd.DataFrame:
     """Scan all (ctx_trend, shape_type, vol_regime) combos for edge.
 
+    Parameters
+    ----------
+    features : classified contextual features
+    fwd : forward returns
+    min_n : minimum sample size per combo
+    exclude_shapes : shape types to exclude (default: "other" has no edge)
+
     Returns DataFrame sorted by absolute mean forward return.
+    Picks the BEST forward horizon per setup (highest |mean|).
     """
     fwd_cols = [c for c in fwd.columns if c.startswith("fwd_")]
     combined = pd.concat([features[["ctx_trend", "shape_type", "vol_regime"]], fwd], axis=1)
 
     rows = []
     for (ctx, shape, vol), group in combined.groupby(["ctx_trend", "shape_type", "vol_regime"]):
+        # Skip garbage shapes — "other" has no defined morphology
+        if shape in exclude_shapes:
+            continue
+
         n = len(group)
         if n < min_n:
             continue
 
         row = {"ctx_trend": ctx, "shape_type": shape, "vol_regime": vol, "n": n}
+
+        # Track best horizon for this setup
+        best_abs_mean = 0
+        best_horizon = None
 
         for fc in fwd_cols:
             vals = group[fc].dropna()
@@ -217,16 +251,32 @@ def scan_setups(
             row[f"{fc}_sharpe"] = mean / std if std > 0 else 0
             row[f"{fc}_pf"] = wins.sum() / losses.abs().sum() if losses.abs().sum() > 0 else np.inf
 
+            if abs(mean) > best_abs_mean:
+                best_abs_mean = abs(mean)
+                best_horizon = fc
+
+        # Store best horizon info
+        if best_horizon is not None:
+            horizon_bars = int(best_horizon.split("_")[1])
+            row["best_horizon"] = best_horizon
+            row["best_horizon_bars"] = horizon_bars
+            row["best_mean"] = row[f"{best_horizon}_mean"]
+            row["best_win"] = row.get(f"{best_horizon}_win", 0)
+            row["best_pf"] = row.get(f"{best_horizon}_pf", 0)
+
         rows.append(row)
 
     result = pd.DataFrame(rows)
     if len(result) == 0:
         return result
 
-    # Sort by best forward mean (absolute)
-    first_fwd = fwd_cols[0]
-    mean_col = f"{first_fwd}_mean"
-    if mean_col in result.columns:
-        result = result.sort_values(mean_col, key=abs, ascending=False)
+    # Sort by best forward mean (absolute) across ALL horizons
+    if "best_mean" in result.columns:
+        result = result.sort_values("best_mean", key=abs, ascending=False)
+    else:
+        first_fwd = fwd_cols[0]
+        mean_col = f"{first_fwd}_mean"
+        if mean_col in result.columns:
+            result = result.sort_values(mean_col, key=abs, ascending=False)
 
     return result

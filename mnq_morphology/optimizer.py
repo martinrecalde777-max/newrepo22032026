@@ -47,6 +47,8 @@ class OptResult:
     sharpe: float
     max_dd_pts: float
     expectancy_pts: float
+    stop_ev_ratio: float | None = None
+    target_ev_ratio: float | None = None
 
 
 def grid_search(
@@ -64,6 +66,8 @@ def grid_search(
     commission_pts: float = 0.5,
     min_trades: int = 50,
     higher_timeframes: tuple[str, ...] = ("5min", "1h"),
+    stop_ev_ratios: tuple[float | None, ...] = (None,),
+    target_ev_ratios: tuple[float | None, ...] = (None,),
     verbose: bool = True,
 ) -> pd.DataFrame:
     """Exhaustive grid search over parameter space.
@@ -92,7 +96,7 @@ def grid_search(
 
     # Pre-generate all raw signals for each stop/target/holding combo
     # to avoid recomputing contextual features each time
-    combos = list(product(stop_atr_range, target_atr_range, holding_range, session_combos, mtf_scores))
+    combos = list(product(stop_atr_range, target_atr_range, holding_range, session_combos, mtf_scores, stop_ev_ratios, target_ev_ratios))
     total = len(combos)
 
     if verbose:
@@ -102,6 +106,10 @@ def grid_search(
         print(f"  holding: {holding_range}")
         print(f"  sessions: {session_combos}")
         print(f"  mtf_min: {mtf_scores}")
+        if any(r is not None for r in stop_ev_ratios):
+            print(f"  stop_ev_ratio: {stop_ev_ratios}")
+        if any(r is not None for r in target_ev_ratios):
+            print(f"  target_ev_ratio: {target_ev_ratios}")
 
     # Pre-compute MTF slopes ONCE (the expensive part)
     needs_mtf = max(mtf_scores) > 0
@@ -117,8 +125,8 @@ def grid_search(
 
     results: list[OptResult] = []
 
-    for i, (stop_atr, target_atr, holding, sessions, mtf_min) in enumerate(combos):
-        sig_key = (stop_atr, target_atr, holding)
+    for i, (stop_atr, target_atr, holding, sessions, mtf_min, stop_ev, target_ev) in enumerate(combos):
+        sig_key = (stop_atr, target_atr, holding, stop_ev, target_ev)
 
         if sig_key not in signal_cache:
             sigs = generate_signals(
@@ -126,6 +134,8 @@ def grid_search(
                 stop_atr_mult=stop_atr,
                 target_atr_mult=target_atr,
                 holding_bars=holding,
+                stop_ev_ratio=stop_ev,
+                target_ev_ratio=target_ev,
             )
             signal_cache[sig_key] = sigs
 
@@ -174,6 +184,8 @@ def grid_search(
             sharpe=bt.sharpe_ratio,
             max_dd_pts=bt.max_drawdown_pts,
             expectancy_pts=bt.expectancy_pts,
+            stop_ev_ratio=stop_ev,
+            target_ev_ratio=target_ev,
         ))
 
         if verbose and (i + 1) % 20 == 0:
@@ -186,7 +198,7 @@ def grid_search(
     # Build result DataFrame
     rows = []
     for r in results:
-        rows.append({
+        row = {
             "stop_atr": r.stop_atr,
             "target_atr": r.target_atr if r.target_atr is not None else "expected",
             "holding_bars": r.holding_bars,
@@ -200,7 +212,12 @@ def grid_search(
             "max_dd_pts": r.max_dd_pts,
             "expectancy_pts": r.expectancy_pts,
             "pnl_per_dd": r.net_pnl_pts / r.max_dd_pts if r.max_dd_pts > 0 else 0,
-        })
+        }
+        if hasattr(r, "stop_ev_ratio"):
+            row["stop_ev"] = r.stop_ev_ratio
+        if hasattr(r, "target_ev_ratio"):
+            row["target_ev"] = r.target_ev_ratio
+        rows.append(row)
 
     result_df = pd.DataFrame(rows)
     if len(result_df) > 0:

@@ -33,18 +33,25 @@ def compute_atr(df: pd.DataFrame, period: int = 20) -> pd.Series:
 def build_setup_table(
     scan_results: pd.DataFrame,
     min_n: int = 80,
-    min_abs_mean: float = 3.0,
-    min_win_rate: float = 0.52,
+    min_abs_mean: float = 8.0,
+    min_win_rate: float = 0.55,
+    min_pf: float = 1.3,
     max_p_value: float | None = None,
 ) -> pd.DataFrame:
-    """Filter scan_setups output to keep only actionable setups.
+    """Filter scan_setups output to keep only HIGH-QUALITY setups.
+
+    The key lesson: trading many weak setups dilutes the edge.
+    Only trade setups with strong statistical evidence.
 
     Parameters
     ----------
     scan_results : output of contextual_morphology.scan_setups()
     min_n : minimum sample size
     min_abs_mean : minimum absolute mean forward return (points)
-    min_win_rate : minimum win rate
+        Previous value of 3.0 was too low — gets eaten by costs.
+        8.0+ ensures real edge after slippage+commission.
+    min_win_rate : minimum win rate (directional)
+    min_pf : minimum profit factor at the statistical level
     max_p_value : if provided, filter by p-value column (optional)
 
     Returns
@@ -54,27 +61,35 @@ def build_setup_table(
     if len(scan_results) == 0:
         return pd.DataFrame()
 
-    # Find the first fwd_*_mean column
-    mean_cols = [c for c in scan_results.columns if c.endswith("_mean")]
-    if not mean_cols:
-        return pd.DataFrame()
+    # Use best_mean/best_win/best_pf if available (multi-horizon),
+    # otherwise fall back to first fwd column
+    if "best_mean" in scan_results.columns:
+        fwd_mean = "best_mean"
+        fwd_win = "best_win"
+        fwd_pf = "best_pf"
+    else:
+        mean_cols = [c for c in scan_results.columns if c.endswith("_mean")]
+        if not mean_cols:
+            return pd.DataFrame()
+        fwd_mean = mean_cols[0]
+        fwd_win = fwd_mean.replace("_mean", "_win")
+        fwd_pf = fwd_mean.replace("_mean", "_pf")
 
-    fwd_mean = mean_cols[0]
-    fwd_win = fwd_mean.replace("_mean", "_win")
-
+    # Quality gate: sample size + absolute edge
     mask = (
         (scan_results["n"] >= min_n)
         & (scan_results[fwd_mean].abs() >= min_abs_mean)
     )
+
+    # Win rate filter (direction-aware)
     if fwd_win in scan_results.columns:
-        # For short setups, "win" means price went down, so win rate logic
-        # depends on direction. We use raw win rate for longs and (1-win) for shorts.
-        # But scan_setups already computes win = P(fwd > 0), so:
-        #   long setups: want high win rate
-        #   short setups: want low win rate (= high loss rate for the fwd > 0 metric)
         long_mask = (scan_results[fwd_mean] > 0) & (scan_results[fwd_win] >= min_win_rate)
         short_mask = (scan_results[fwd_mean] < 0) & ((1 - scan_results[fwd_win]) >= min_win_rate)
         mask = mask & (long_mask | short_mask)
+
+    # Profit factor filter — require PF >= min_pf
+    if fwd_pf in scan_results.columns:
+        mask = mask & (scan_results[fwd_pf] >= min_pf)
 
     out = scan_results[mask].copy()
     if len(out) == 0:
@@ -82,6 +97,12 @@ def build_setup_table(
 
     out["direction"] = np.where(out[fwd_mean] > 0, "long", "short")
     out["expected_move"] = out[fwd_mean].abs()
+
+    # Per-setup optimal holding period (from best horizon analysis)
+    if "best_horizon_bars" in out.columns:
+        out["optimal_holding"] = out["best_horizon_bars"]
+    else:
+        out["optimal_holding"] = 60  # default
 
     # Confidence: how much data backs this setup (capped at 1.0)
     out["confidence"] = (out["n"] / (min_n * 5)).clip(upper=1.0)
@@ -97,6 +118,8 @@ def generate_signals(
     stop_atr_mult: float = 1.5,
     target_atr_mult: float | None = None,
     holding_bars: int = 60,
+    stop_ev_ratio: float | None = None,
+    target_ev_ratio: float | None = None,
 ) -> pd.DataFrame:
     """Generate trade signals on the bar-level DataFrame.
 
@@ -106,9 +129,14 @@ def generate_signals(
     features : classified contextual features (output of classify_context)
     setup_table : filtered setups from build_setup_table()
     atr_period : period for ATR calculation
-    stop_atr_mult : stop distance = ATR * this multiplier
+    stop_atr_mult : stop distance = ATR * this multiplier (used when stop_ev_ratio is None)
     target_atr_mult : target distance = ATR * this. If None, uses setup's expected_move.
     holding_bars : max bars to hold if neither stop nor target hit
+    stop_ev_ratio : if set, stop = expected_move * this ratio (e.g., 0.4 = risk 40% of EV)
+        Overrides stop_atr_mult. This scales the stop proportionally to the
+        setup's edge, preventing tight ATR stops from killing high-EV setups.
+    target_ev_ratio : if set, target = expected_move * this ratio (e.g., 0.8)
+        Overrides target_atr_mult.
 
     Returns
     -------
@@ -151,12 +179,21 @@ def generate_signals(
             continue
 
         entry = df.loc[ts, "close"]
-        stop_dist = current_atr * stop_atr_mult
+        ev = setup["expected_move"]
 
-        if target_atr_mult is not None:
+        # Stop distance: EV-proportional or ATR-based
+        if stop_ev_ratio is not None:
+            stop_dist = ev * stop_ev_ratio
+        else:
+            stop_dist = current_atr * stop_atr_mult
+
+        # Target distance: EV-proportional, ATR-based, or expected_move
+        if target_ev_ratio is not None:
+            target_dist = ev * target_ev_ratio
+        elif target_atr_mult is not None:
             target_dist = current_atr * target_atr_mult
         else:
-            target_dist = setup["expected_move"]
+            target_dist = ev
 
         direction = setup["direction"]
         if direction == "long":
@@ -166,6 +203,11 @@ def generate_signals(
             stop_price = entry + stop_dist
             target_price = entry - target_dist
 
+        # Use per-setup optimal holding period if available, else global
+        setup_holding = int(setup.get("optimal_holding", holding_bars))
+        if holding_bars > 0:
+            setup_holding = min(setup_holding, holding_bars) if holding_bars != 60 else setup_holding
+
         signals.append({
             "timestamp": ts,
             "direction": direction,
@@ -174,7 +216,7 @@ def generate_signals(
             "target_price": target_price,
             "stop_distance": stop_dist,
             "target_distance": target_dist,
-            "holding_bars": holding_bars,
+            "holding_bars": setup_holding,
             "setup_key": f"{ctx}|{shape}|{vol}",
             "confidence": setup["confidence"],
             "atr": current_atr,

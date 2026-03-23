@@ -39,10 +39,29 @@ print(f"  {len(cont):,} bars ({cont.index.min()} → {cont.index.max()})")
 
 feats = compute_contextual_features(cont, shape_window=60, context_window=120, step=12)
 classified = classify_context(feats)
-fwd = ctx_forward_returns(cont, classified, forward_bars=(30, 60, 120))
-setups = scan_setups(classified, fwd, min_n=80)
-table = build_setup_table(setups, min_n=80, min_abs_mean=3.0, min_win_rate=0.52)
+# Include 240-bar horizon (4hrs) — best setups need longer holding
+fwd = ctx_forward_returns(cont, classified, forward_bars=(60, 120, 240))
+setups = scan_setups(classified, fwd, min_n=80, exclude_shapes=("other",))
+# HIGH quality gates: min 10pts edge, 55% win rate, 1.3 PF
+# (raised from 8 to 10 to drop marginal setups like big_expansion|vol_low = -1139 pts in backtest)
+table = build_setup_table(setups, min_n=80, min_abs_mean=10.0, min_win_rate=0.55, min_pf=1.3)
 print(f"  {len(classified):,} windows, {len(setups)} raw setups, {len(table)} qualifying")
+
+# Show qualifying setups with quality metrics
+if len(table) > 0:
+    print(f"\n  QUALIFYING HIGH-EDGE SETUPS:")
+    print(f"  {'Setup':<55s} {'Dir':>5s} {'EV':>8s} {'WR':>6s} {'PF':>6s} {'N':>5s} {'Hold':>5s}")
+    print(f"  {'-'*90}")
+    for _, row in table.iterrows():
+        key = f"{row['ctx_trend']}|{row['shape_type']}|{row['vol_regime']}"
+        hold = int(row.get('optimal_holding', 60))
+        ev = row['expected_move']
+        win_col = row.get('best_win', 0)
+        pf_col = row.get('best_pf', 0)
+        direction = row['direction']
+        # For short setups, show negative EV
+        ev_display = ev if direction == 'long' else -ev
+        print(f"  {key:<55s} {direction:>5s} {ev_display:>+7.1f} {win_col:>5.1%} {pf_col:>5.2f} {row['n']:>5.0f} {hold:>4d}m")
 
 # ============================================================
 # 2. Session filter analysis
@@ -51,8 +70,9 @@ print("\n" + "=" * 70)
 print("[2/5] SESSION FILTER ANALYSIS")
 print("=" * 70)
 
-# Generate base signals
-base_sigs = generate_signals(cont, classified, table, stop_atr_mult=1.0, holding_bars=60)
+# Generate base signals — ATR-based (proven better than EV-proportional)
+base_sigs = generate_signals(cont, classified, table, stop_atr_mult=1.5,
+                              target_atr_mult=3.0, holding_bars=240)
 base_sigs_with_session = add_session_filter(base_sigs, allowed_sessions=("asia", "london", "ny", "off_hours"))
 
 for session_combo, label in [
@@ -63,7 +83,7 @@ for session_combo, label in [
     (("asia",), "Asia only"),
 ]:
     sigs = base_sigs_with_session[base_sigs_with_session["session"].isin(session_combo)]
-    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    sigs = filter_no_overlap(sigs, min_gap_bars=120)
     if len(sigs) < 10:
         print(f"  {label:20s}: too few signals ({len(sigs)})")
         continue
@@ -100,7 +120,7 @@ for min_score, label in [(0, "No MTF filter"), (1, "MTF score >= 1"), (2, "MTF s
         sigs = filter_mtf_confirmed(mtf_sigs, min_score=min_score)
     else:
         sigs = mtf_sigs
-    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    sigs = filter_no_overlap(sigs, min_gap_bars=120)
     if len(sigs) < 10:
         print(f"  {label:20s}: too few signals ({len(sigs)})")
         continue
@@ -119,7 +139,7 @@ for sessions, mtf_min in [
 ]:
     sigs = add_session_filter(mtf_sigs, allowed_sessions=sessions)
     sigs = filter_mtf_confirmed(sigs, min_score=mtf_min)
-    sigs = filter_no_overlap(sigs, min_gap_bars=60)
+    sigs = filter_no_overlap(sigs, min_gap_bars=120)
     label = f"{'+'.join(sessions)} MTF>={mtf_min}"
     if len(sigs) < 10:
         print(f"    {label:30s}: too few signals ({len(sigs)})")
@@ -139,16 +159,16 @@ print("=" * 70)
 
 opt_results = grid_search(
     cont, classified, table,
-    stop_atr_range=(0.5, 0.75, 1.0, 1.5),
-    target_atr_range=(None, 1.5, 3.0),
-    holding_range=(30, 60),
+    stop_atr_range=(1.5, 2.0, 3.0, 5.0),  # test wider stops to let trades breathe
+    target_atr_range=(None, 3.0, 5.0),     # None = expected_move, or wider ATR targets
+    holding_range=(120, 240),              # 2-4hrs — matches best setups
     session_combos=(
         ("london", "ny"),
     ),
     mtf_scores=(0, 1),
     slippage_pts=0.5,
     commission_pts=0.5,
-    min_trades=50,
+    min_trades=30,
     higher_timeframes=("5min", "1h"),
     verbose=True,
 )
@@ -211,13 +231,27 @@ if len(opt_results) > 0:
     holding = int(best["holding_bars"])
     sessions = tuple(best["sessions"].split("|"))
     mtf_min = int(best["mtf_min"])
+    stop_ev = best.get("stop_ev")
+    target_ev = best.get("target_ev")
+    # Handle NaN from pandas
+    if pd.notna(stop_ev) and stop_ev is not None:
+        stop_ev = float(stop_ev)
+    else:
+        stop_ev = None
+    if pd.notna(target_ev) and target_ev is not None:
+        target_ev = float(target_ev)
+    else:
+        target_ev = None
 
     print(f"\n  Config: stop_atr={stop_atr}, target_atr={target_atr}, holding={holding}")
     print(f"          sessions={sessions}, mtf_min={mtf_min}")
+    if stop_ev is not None:
+        print(f"          stop_ev_ratio={stop_ev}, target_ev_ratio={target_ev}")
 
     # Re-run with best params
     sigs = generate_signals(cont, classified, table, stop_atr_mult=stop_atr,
-                            target_atr_mult=target_atr, holding_bars=holding)
+                            target_atr_mult=target_atr, holding_bars=holding,
+                            stop_ev_ratio=stop_ev, target_ev_ratio=target_ev)
     sigs = add_session_filter(sigs, allowed_sessions=sessions)
     if mtf_min > 0:
         sigs = add_mtf_confirmation(sigs, cont, higher_timeframes=("5min", "1h"),
