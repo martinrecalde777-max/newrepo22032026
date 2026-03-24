@@ -255,37 +255,28 @@ def train_magnitude_first(df, features, target_horizon=30):
 
     # Grid search parameters
     mag_thresholds = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80]
-    dir_thresholds = [0.50, 0.51, 0.52, 0.53, 0.55, 0.57, 0.60]  # prob_up threshold (>0.5 = any bias)
+    dir_thresholds = [0.50, 0.51, 0.52, 0.53, 0.55, 0.57, 0.60]
     sl_multipliers = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
     tp_multipliers = [1.5, 2.0, 2.5, 3.0, 4.0, 5.0]
     use_regime = [False, True]
 
     from backtest.engine import BacktestEngine
 
-    results = []
-    total_combos = len(mag_thresholds) * len(dir_thresholds) * len(sl_multipliers) * len(tp_multipliers) * len(use_regime)
-    logger.info(f"Total combinations to test: {total_combos:,}")
-    logger.info("Running grid search...")
+    # ================================================================
+    # PHASE 1: QUICK PnL SCAN (positions × returns, no SL/TP)
+    # This is ~1000x faster than full backtest engine
+    # ================================================================
+    costs = (0.52 + 1.0) * 2  # 3.04 points round-trip
 
-    combo_count = 0
+    quick_results = []
+    total_signal_combos = len(mag_thresholds) * len(dir_thresholds) * len(use_regime)
+    logger.info(f"Phase 1: Quick scan of {total_signal_combos} signal configurations...")
     t0 = time.time()
 
-    for mag_t, dir_t, sl_m, tp_m, regime in product(
-        mag_thresholds, dir_thresholds, sl_multipliers, tp_multipliers, use_regime
-    ):
-        combo_count += 1
-
-        # STEP 1: Magnitude gate (first filter)
+    for mag_t, dir_t, regime in product(mag_thresholds, dir_thresholds, use_regime):
         mag_pass = mag_probs_te >= mag_t
-
-        # STEP 2: Direction filter (second filter)
-        # dir_t is the minimum prob_up for LONG, or maximum (1-dir_t) for SHORT
         dir_pass = (prob_up_te >= dir_t) | (prob_up_te <= (1 - dir_t))
-
-        # STEP 3: Combined signal
         sig_valid = mag_pass & dir_pass
-
-        # Optional regime filter
         if regime:
             sig_valid = sig_valid & regime_te.astype(bool)
 
@@ -293,63 +284,146 @@ def train_magnitude_first(df, features, target_horizon=30):
         if n_signals < 5:
             continue
 
-        # Build signals DataFrame for backtest engine
-        signals_df = pd.DataFrame({
-            'direction_numeric': direction_te,
-            'expected_return': ret_pred_te,
-            'expected_value': np.full(len(X_te), 100.0),  # dummy, we bypass EV filter
-            'confidence': np.full(len(X_te), 1.0),         # dummy, we bypass confidence filter
-            'signal_valid': sig_valid,
-            'prob_big_move': mag_probs_te,
-            'regime_active': regime_te.astype(bool) if regime else np.ones(len(X_te), dtype=bool),
-        })
+        positions = np.where(sig_valid, direction_te, 0)
+        trade_returns = positions * y_ret_te
+        trade_pnls = trade_returns[positions != 0]
+        n_trades = len(trade_pnls)
 
-        # Configure backtest
-        config = SystemConfig()
-        config.trading.min_confidence = 0.0
-        config.trading.min_expected_value_points = 0.0
-        config.trading.stop_loss_multiplier = sl_m
-        config.trading.take_profit_multiplier = tp_m
-        config.trading.max_drawdown_points = 10000.0  # Don't halt early
-
-        engine = BacktestEngine(config)
-        try:
-            bt = engine.run(df_test, signals_df)
-        except Exception:
+        if n_trades < 5:
             continue
 
-        if bt['n_trades'] < 3:
-            continue
+        net_pnls = trade_pnls - costs
+        gross_pnl = net_pnls.sum()
+        winners = net_pnls[net_pnls > 0]
+        losers = net_pnls[net_pnls <= 0]
+        win_rate = len(winners) / n_trades
+        pf = abs(winners.sum() / losers.sum()) if losers.sum() != 0 else float('inf')
+        ev_per_trade = gross_pnl / n_trades
+        sharpe = net_pnls.mean() / max(net_pnls.std(), 0.01) * np.sqrt(252)
 
-        results.append({
+        quick_results.append({
             'mag_threshold': mag_t,
             'dir_threshold': dir_t,
-            'sl_multiplier': sl_m,
-            'tp_multiplier': tp_m,
             'regime': regime,
             'n_signals': n_signals,
-            'n_trades': bt['n_trades'],
-            'total_pnl': bt['total_pnl_points'],
-            'total_pnl_usd': bt['total_pnl_usd'],
-            'win_rate': bt['win_rate'],
-            'profit_factor': bt['profit_factor'],
-            'expectancy': bt['expectancy_per_trade'],
-            'sharpe': bt['sharpe_ratio'],
-            'sortino': bt['sortino_ratio'],
-            'max_dd': bt['max_drawdown_points'],
-            'calmar': bt['calmar_ratio'],
-            'avg_bars_held': bt['avg_bars_held'],
+            'n_trades': n_trades,
+            'quick_pnl': gross_pnl,
+            'quick_wr': win_rate,
+            'quick_pf': pf,
+            'quick_ev': ev_per_trade,
+            'quick_sharpe': sharpe,
         })
 
-        if combo_count % 500 == 0:
-            elapsed = time.time() - t0
-            pct = combo_count / total_combos * 100
-            logger.info(f"  Progress: {combo_count:,}/{total_combos:,} ({pct:.0f}%) - "
-                       f"Elapsed: {elapsed:.0f}s - "
-                       f"Valid configs so far: {len(results)}")
+    quick_df = pd.DataFrame(quick_results)
+    logger.info(f"Phase 1 complete: {len(quick_df)} signal configs in {time.time()-t0:.1f}s")
+
+    # Print quick scan results
+    logger.info("\n  Quick scan results (ALL signal configs, no SL/TP management):")
+    logger.info(f"  {'Mag':>5} {'Dir':>5} {'Reg':>4} {'Signals':>8} {'Trades':>7} "
+                f"{'PnL':>10} {'WR':>7} {'PF':>7} {'EV/Tr':>8} {'Sharpe':>7}")
+    logger.info("  " + "-" * 80)
+    for _, row in quick_df.sort_values('quick_pnl', ascending=False).iterrows():
+        logger.info(
+            f"  {row['mag_threshold']:>5.2f} {row['dir_threshold']:>5.2f} "
+            f"{'Y' if row['regime'] else 'N':>4} "
+            f"{row['n_signals']:>8} {row['n_trades']:>7} "
+            f"{row['quick_pnl']:>10.1f} {row['quick_wr']:>6.1%} {row['quick_pf']:>7.2f} "
+            f"{row['quick_ev']:>8.1f} {row['quick_sharpe']:>7.2f}"
+        )
+
+    # ================================================================
+    # PHASE 2: FULL BACKTEST on select signal configs × SL/TP grid
+    # Only configs with positive quick PnL and < 5000 signals
+    # ================================================================
+    profitable_quick = quick_df[quick_df['quick_pnl'] > 0].copy()
+    # Also include top 5 by sharpe even if negative PnL
+    top_sharpe_extra = quick_df.nlargest(5, 'quick_sharpe')
+    top_configs = pd.concat([profitable_quick, top_sharpe_extra]).drop_duplicates(
+        subset=['mag_threshold', 'dir_threshold', 'regime']
+    )
+    # Limit to manageable signal counts for the backtest engine
+    top_configs = top_configs[top_configs['n_signals'] <= 15000]
+
+    # Reduced SL/TP grid for speed
+    sl_grid = [0.75, 1.0, 1.5, 2.0, 3.0]
+    tp_grid = [2.0, 3.0, 4.0, 5.0]
+
+    total_bt_combos = len(top_configs) * len(sl_grid) * len(tp_grid)
+    logger.info(f"\nPhase 2: Full backtest on {len(top_configs)} signal configs "
+                f"× {len(sl_grid)} SL × {len(tp_grid)} TP = {total_bt_combos} combinations")
+
+    results = []
+    t0 = time.time()
+    combo_count = 0
+
+    for _, sig_cfg in top_configs.iterrows():
+        mag_t = sig_cfg['mag_threshold']
+        dir_t = sig_cfg['dir_threshold']
+        regime = sig_cfg['regime']
+
+        mag_pass = mag_probs_te >= mag_t
+        dir_pass = (prob_up_te >= dir_t) | (prob_up_te <= (1 - dir_t))
+        sig_valid = mag_pass & dir_pass
+        if regime:
+            sig_valid = sig_valid & regime_te.astype(bool)
+
+        for sl_m, tp_m in product(sl_grid, tp_grid):
+            combo_count += 1
+
+            signals_df = pd.DataFrame({
+                'direction_numeric': direction_te,
+                'expected_return': ret_pred_te,
+                'expected_value': np.full(len(X_te), 100.0),
+                'confidence': np.full(len(X_te), 1.0),
+                'signal_valid': sig_valid,
+                'prob_big_move': mag_probs_te,
+                'regime_active': regime_te.astype(bool) if regime else np.ones(len(X_te), dtype=bool),
+            })
+
+            config = SystemConfig()
+            config.trading.min_confidence = 0.0
+            config.trading.min_expected_value_points = 0.0
+            config.trading.stop_loss_multiplier = sl_m
+            config.trading.take_profit_multiplier = tp_m
+            config.trading.max_drawdown_points = 100000.0
+
+            engine = BacktestEngine(config)
+            try:
+                bt = engine.run(df_test, signals_df)
+            except Exception:
+                continue
+
+            if bt['n_trades'] < 3:
+                continue
+
+            results.append({
+                'mag_threshold': mag_t,
+                'dir_threshold': dir_t,
+                'sl_multiplier': sl_m,
+                'tp_multiplier': tp_m,
+                'regime': regime,
+                'n_signals': int(sig_valid.sum()),
+                'n_trades': bt['n_trades'],
+                'total_pnl': bt['total_pnl_points'],
+                'total_pnl_usd': bt['total_pnl_usd'],
+                'win_rate': bt['win_rate'],
+                'profit_factor': bt['profit_factor'],
+                'expectancy': bt['expectancy_per_trade'],
+                'sharpe': bt['sharpe_ratio'],
+                'sortino': bt['sortino_ratio'],
+                'max_dd': bt['max_drawdown_points'],
+                'calmar': bt['calmar_ratio'],
+                'avg_bars_held': bt['avg_bars_held'],
+            })
+
+            if combo_count % 20 == 0:
+                elapsed = time.time() - t0
+                pct = combo_count / total_bt_combos * 100
+                logger.info(f"  Progress: {combo_count}/{total_bt_combos} ({pct:.0f}%) - "
+                           f"Elapsed: {elapsed:.0f}s - Valid: {len(results)}")
 
     elapsed = time.time() - t0
-    logger.info(f"\nGrid search complete: {len(results)} valid configurations in {elapsed:.0f}s")
+    logger.info(f"\nPhase 2 complete: {len(results)} valid configurations in {elapsed:.0f}s")
 
     if not results:
         logger.error("No valid configurations found!")
