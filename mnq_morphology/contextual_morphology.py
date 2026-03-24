@@ -250,6 +250,8 @@ def scan_setups(
             row[f"{fc}_win"] = (vals > 0).mean()
             row[f"{fc}_sharpe"] = mean / std if std > 0 else 0
             row[f"{fc}_pf"] = wins.sum() / losses.abs().sum() if losses.abs().sum() > 0 else np.inf
+            row[f"{fc}_avg_winner"] = float(wins.mean()) if len(wins) > 0 else 0.0
+            row[f"{fc}_avg_loser"] = float(losses.mean()) if len(losses) > 0 else 0.0
 
             if abs(mean) > best_abs_mean:
                 best_abs_mean = abs(mean)
@@ -263,6 +265,8 @@ def scan_setups(
             row["best_mean"] = row[f"{best_horizon}_mean"]
             row["best_win"] = row.get(f"{best_horizon}_win", 0)
             row["best_pf"] = row.get(f"{best_horizon}_pf", 0)
+            row["best_avg_winner"] = row.get(f"{best_horizon}_avg_winner", 0)
+            row["best_avg_loser"] = row.get(f"{best_horizon}_avg_loser", 0)
 
         rows.append(row)
 

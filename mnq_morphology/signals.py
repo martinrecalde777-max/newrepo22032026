@@ -36,6 +36,7 @@ def build_setup_table(
     min_abs_mean: float = 8.0,
     min_win_rate: float = 0.55,
     min_pf: float = 1.3,
+    min_avg_winner: float = 0.0,
     max_p_value: float | None = None,
 ) -> pd.DataFrame:
     """Filter scan_setups output to keep only HIGH-QUALITY setups.
@@ -52,6 +53,8 @@ def build_setup_table(
         8.0+ ensures real edge after slippage+commission.
     min_win_rate : minimum win rate (directional)
     min_pf : minimum profit factor at the statistical level
+    min_avg_winner : minimum average winning trade (points, absolute).
+        Filters at the statistical level before backtesting.
     max_p_value : if provided, filter by p-value column (optional)
 
     Returns
@@ -67,6 +70,7 @@ def build_setup_table(
         fwd_mean = "best_mean"
         fwd_win = "best_win"
         fwd_pf = "best_pf"
+        fwd_avg_winner = "best_avg_winner"
     else:
         mean_cols = [c for c in scan_results.columns if c.endswith("_mean")]
         if not mean_cols:
@@ -74,6 +78,7 @@ def build_setup_table(
         fwd_mean = mean_cols[0]
         fwd_win = fwd_mean.replace("_mean", "_win")
         fwd_pf = fwd_mean.replace("_mean", "_pf")
+        fwd_avg_winner = fwd_mean.replace("_mean", "_avg_winner")
 
     # Quality gate: sample size + absolute edge
     mask = (
@@ -91,12 +96,20 @@ def build_setup_table(
     if fwd_pf in scan_results.columns:
         mask = mask & (scan_results[fwd_pf] >= min_pf)
 
+    # Average winner filter — reject setups where winners are too small
+    if min_avg_winner > 0 and fwd_avg_winner in scan_results.columns:
+        mask = mask & (scan_results[fwd_avg_winner].abs() >= min_avg_winner)
+
     out = scan_results[mask].copy()
     if len(out) == 0:
         return pd.DataFrame()
 
     out["direction"] = np.where(out[fwd_mean] > 0, "long", "short")
     out["expected_move"] = out[fwd_mean].abs()
+
+    # Avg winner from scan data (statistical, pre-backtest)
+    if fwd_avg_winner in out.columns:
+        out["stat_avg_winner"] = out[fwd_avg_winner].abs()
 
     # Per-setup optimal holding period (from best horizon analysis)
     if "best_horizon_bars" in out.columns:
@@ -120,6 +133,8 @@ def generate_signals(
     holding_bars: int = 60,
     stop_ev_ratio: float | None = None,
     target_ev_ratio: float | None = None,
+    stop_pts: float | None = None,
+    target_pts: float | None = None,
 ) -> pd.DataFrame:
     """Generate trade signals on the bar-level DataFrame.
 
@@ -137,6 +152,8 @@ def generate_signals(
         setup's edge, preventing tight ATR stops from killing high-EV setups.
     target_ev_ratio : if set, target = expected_move * this ratio (e.g., 0.8)
         Overrides target_atr_mult.
+    stop_pts : fixed stop distance in points. Overrides all other stop methods.
+    target_pts : fixed target distance in points. Overrides all other target methods.
 
     Returns
     -------
@@ -181,14 +198,18 @@ def generate_signals(
         entry = df.loc[ts, "close"]
         ev = setup["expected_move"]
 
-        # Stop distance: EV-proportional or ATR-based
-        if stop_ev_ratio is not None:
+        # Stop distance: fixed pts > EV-proportional > ATR-based
+        if stop_pts is not None:
+            stop_dist = stop_pts
+        elif stop_ev_ratio is not None:
             stop_dist = ev * stop_ev_ratio
         else:
             stop_dist = current_atr * stop_atr_mult
 
-        # Target distance: EV-proportional, ATR-based, or expected_move
-        if target_ev_ratio is not None:
+        # Target distance: fixed pts > EV-proportional > ATR-based > expected_move
+        if target_pts is not None:
+            target_dist = target_pts
+        elif target_ev_ratio is not None:
             target_dist = ev * target_ev_ratio
         elif target_atr_mult is not None:
             target_dist = current_atr * target_atr_mult

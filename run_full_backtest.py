@@ -38,17 +38,18 @@ print(f"  Shape types: {classified['shape_type'].value_counts().to_dict()}")
 
 # 3. Forward returns + scan
 print("\n[3/6] Scanning for best setups...")
-fwd = ctx_forward_returns(cont, classified, forward_bars=(30, 60, 120))
+fwd = ctx_forward_returns(cont, classified, forward_bars=(30, 60, 120, 240, 480))
 setups = scan_setups(classified, fwd, min_n=80)
 print(f"  {len(setups)} raw setups found")
 
 # 4. Build setup table + signals
 print("\n[4/6] Generating signals...")
-table = build_setup_table(setups, min_n=80, min_abs_mean=3.0, min_win_rate=0.52)
+table = build_setup_table(setups, min_n=80, min_abs_mean=8.0, min_win_rate=0.55, min_pf=1.3)
 print(f"  {len(table)} qualifying setups:")
 for _, row in table.head(10).iterrows():
+    stat_aw = f"avg_win={row['stat_avg_winner']:.1f}" if "stat_avg_winner" in row.index else ""
     print(f"    {row['direction']:5s} | {row['ctx_trend']:15s} | {row['shape_type']:20s} | {row['vol_regime']:15s} | "
-          f"mean={row['expected_move']:.1f}pts | n={row['n']:.0f} | conf={row['confidence']:.2f}")
+          f"mean={row['expected_move']:.1f}pts | n={row['n']:.0f} | conf={row['confidence']:.2f} | {stat_aw}")
 
 signals = generate_signals(cont, classified, table, stop_atr_mult=1.5, holding_bars=60)
 print(f"\n  {len(signals):,} raw signals generated")

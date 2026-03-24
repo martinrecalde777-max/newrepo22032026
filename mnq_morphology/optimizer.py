@@ -47,8 +47,12 @@ class OptResult:
     sharpe: float
     max_dd_pts: float
     expectancy_pts: float
+    avg_win_pts: float = 0.0
+    avg_loss_pts: float = 0.0
     stop_ev_ratio: float | None = None
     target_ev_ratio: float | None = None
+    stop_pts: float | None = None
+    target_pts: float | None = None
 
 
 def grid_search(
@@ -68,6 +72,8 @@ def grid_search(
     higher_timeframes: tuple[str, ...] = ("5min", "1h"),
     stop_ev_ratios: tuple[float | None, ...] = (None,),
     target_ev_ratios: tuple[float | None, ...] = (None,),
+    stop_pts_range: tuple[float | None, ...] = (None,),
+    target_pts_range: tuple[float | None, ...] = (None,),
     verbose: bool = True,
 ) -> pd.DataFrame:
     """Exhaustive grid search over parameter space.
@@ -96,7 +102,14 @@ def grid_search(
 
     # Pre-generate all raw signals for each stop/target/holding combo
     # to avoid recomputing contextual features each time
-    combos = list(product(stop_atr_range, target_atr_range, holding_range, session_combos, mtf_scores, stop_ev_ratios, target_ev_ratios))
+    # Build combo space — support both ATR-based and fixed-point params
+    use_fixed_pts = any(s is not None for s in stop_pts_range) or any(t is not None for t in target_pts_range)
+
+    combos = list(product(
+        stop_atr_range, target_atr_range, holding_range, session_combos,
+        mtf_scores, stop_ev_ratios, target_ev_ratios,
+        stop_pts_range, target_pts_range,
+    ))
     total = len(combos)
 
     if verbose:
@@ -110,6 +123,9 @@ def grid_search(
             print(f"  stop_ev_ratio: {stop_ev_ratios}")
         if any(r is not None for r in target_ev_ratios):
             print(f"  target_ev_ratio: {target_ev_ratios}")
+        if use_fixed_pts:
+            print(f"  stop_pts: {stop_pts_range}")
+            print(f"  target_pts: {target_pts_range}")
 
     # Pre-compute MTF slopes ONCE (the expensive part)
     needs_mtf = max(mtf_scores) > 0
@@ -125,8 +141,8 @@ def grid_search(
 
     results: list[OptResult] = []
 
-    for i, (stop_atr, target_atr, holding, sessions, mtf_min, stop_ev, target_ev) in enumerate(combos):
-        sig_key = (stop_atr, target_atr, holding, stop_ev, target_ev)
+    for i, (stop_atr, target_atr, holding, sessions, mtf_min, stop_ev, target_ev, s_pts, t_pts) in enumerate(combos):
+        sig_key = (stop_atr, target_atr, holding, stop_ev, target_ev, s_pts, t_pts)
 
         if sig_key not in signal_cache:
             sigs = generate_signals(
@@ -136,6 +152,8 @@ def grid_search(
                 holding_bars=holding,
                 stop_ev_ratio=stop_ev,
                 target_ev_ratio=target_ev,
+                stop_pts=s_pts,
+                target_pts=t_pts,
             )
             signal_cache[sig_key] = sigs
 
@@ -184,8 +202,12 @@ def grid_search(
             sharpe=bt.sharpe_ratio,
             max_dd_pts=bt.max_drawdown_pts,
             expectancy_pts=bt.expectancy_pts,
+            avg_win_pts=bt.avg_win_pts,
+            avg_loss_pts=bt.avg_loss_pts,
             stop_ev_ratio=stop_ev,
             target_ev_ratio=target_ev,
+            stop_pts=s_pts,
+            target_pts=t_pts,
         ))
 
         if verbose and (i + 1) % 20 == 0:
@@ -211,12 +233,18 @@ def grid_search(
             "sharpe": r.sharpe,
             "max_dd_pts": r.max_dd_pts,
             "expectancy_pts": r.expectancy_pts,
+            "avg_win_pts": r.avg_win_pts,
+            "avg_loss_pts": r.avg_loss_pts,
             "pnl_per_dd": r.net_pnl_pts / r.max_dd_pts if r.max_dd_pts > 0 else 0,
         }
-        if hasattr(r, "stop_ev_ratio"):
+        if r.stop_ev_ratio is not None:
             row["stop_ev"] = r.stop_ev_ratio
-        if hasattr(r, "target_ev_ratio"):
+        if r.target_ev_ratio is not None:
             row["target_ev"] = r.target_ev_ratio
+        if r.stop_pts is not None:
+            row["stop_pts"] = r.stop_pts
+        if r.target_pts is not None:
+            row["target_pts"] = r.target_pts
         rows.append(row)
 
     result_df = pd.DataFrame(rows)
