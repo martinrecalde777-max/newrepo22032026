@@ -1,0 +1,1402 @@
+{
+  "5m_g3_h5_sl10": {
+    "summary": {
+      "n_trades": 14801,
+      "total_pnl": -23574.73999999999,
+      "avg_pnl": -1.5927802175528674,
+      "avg_pts": -0.17639010877643369,
+      "win_rate": 0.35517870414161207,
+      "sharpe": -0.8264620306907163,
+      "max_dd": -25366.580000009515,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 3,
+      "desc": "3x5m=15min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 4571,
+        "total_pnl": -8754.0399999994
+      },
+      {
+        "period": 2,
+        "n_trades": 1955,
+        "total_pnl": -6653.6999999997015
+      },
+      {
+        "period": 3,
+        "n_trades": 3299,
+        "total_pnl": -2788.7599999998474
+      },
+      {
+        "period": 4,
+        "n_trades": 4967,
+        "total_pnl": -5274.579999999246
+      },
+      {
+        "period": 5,
+        "n_trades": 9,
+        "total_pnl": -103.65999999999998
+      }
+    ]
+  },
+  "5m_g3_h10_sl15": {
+    "summary": {
+      "n_trades": 14801,
+      "total_pnl": -36074.24,
+      "avg_pnl": -2.4372839672995066,
+      "avg_pts": -0.5986419836497533,
+      "win_rate": 0.3716640767515708,
+      "sharpe": -0.9352693520956089,
+      "max_dd": -38595.98000000896,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 3,
+      "desc": "3x5m=15min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 4571,
+        "total_pnl": -10766.03999999935
+      },
+      {
+        "period": 2,
+        "n_trades": 1955,
+        "total_pnl": -6187.6999999997215
+      },
+      {
+        "period": 3,
+        "n_trades": 3299,
+        "total_pnl": -5212.75999999944
+      },
+      {
+        "period": 4,
+        "n_trades": 4967,
+        "total_pnl": -13879.079999999096
+      },
+      {
+        "period": 5,
+        "n_trades": 9,
+        "total_pnl": -28.659999999999993
+      }
+    ]
+  },
+  "5m_g3_h15_sl20": {
+    "summary": {
+      "n_trades": 14801,
+      "total_pnl": -41145.74000000004,
+      "avg_pnl": -2.779929734477403,
+      "avg_pts": -0.7699648672387015,
+      "win_rate": 0.38558205526653605,
+      "sharpe": -0.8655915955311754,
+      "max_dd": -43527.260000001246,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 3,
+      "desc": "3x5m=15min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 4571,
+        "total_pnl": -11414.039999999304
+      },
+      {
+        "period": 2,
+        "n_trades": 1955,
+        "total_pnl": -7746.699999999651
+      },
+      {
+        "period": 3,
+        "n_trades": 3299,
+        "total_pnl": -7474.259999999362
+      },
+      {
+        "period": 4,
+        "n_trades": 4967,
+        "total_pnl": -14379.079999999036
+      },
+      {
+        "period": 5,
+        "n_trades": 9,
+        "total_pnl": -131.66000000000003
+      }
+    ]
+  },
+  "5m_g3_h30_sl25": {
+    "summary": {
+      "n_trades": 14801,
+      "total_pnl": -52867.74000000005,
+      "avg_pnl": -3.5719032497804237,
+      "avg_pts": -1.1659516248902118,
+      "win_rate": 0.37389365583406525,
+      "sharpe": -0.8338805481677264,
+      "max_dd": -56200.4599999935,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 3,
+      "desc": "3x5m=15min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 4571,
+        "total_pnl": -16138.03999999944
+      },
+      {
+        "period": 2,
+        "n_trades": 1955,
+        "total_pnl": -9033.699999999653
+      },
+      {
+        "period": 3,
+        "n_trades": 3299,
+        "total_pnl": -11937.259999999353
+      },
+      {
+        "period": 4,
+        "n_trades": 4967,
+        "total_pnl": -15819.079999999201
+      },
+      {
+        "period": 5,
+        "n_trades": 9,
+        "total_pnl": 60.339999999999954
+      }
+    ]
+  },
+  "5m_g5_h5_sl10": {
+    "summary": {
+      "n_trades": 6217,
+      "total_pnl": -87.57999999999629,
+      "avg_pnl": -0.014087180312047014,
+      "avg_pts": 0.6129564098439765,
+      "win_rate": 0.35724626025414186,
+      "sharpe": -0.006016360064144491,
+      "max_dd": -3810.1199999999562,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 5,
+      "desc": "5x5m=25min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 1441,
+        "total_pnl": 474.1599999999896
+      },
+      {
+        "period": 4,
+        "n_trades": 4761,
+        "total_pnl": -526.639999999881
+      },
+      {
+        "period": 5,
+        "n_trades": 15,
+        "total_pnl": -35.09999999999995
+      }
+    ]
+  },
+  "5m_g5_h10_sl15": {
+    "summary": {
+      "n_trades": 6219,
+      "total_pnl": -4349.560000000002,
+      "avg_pnl": -0.6993986171410198,
+      "avg_pts": 0.2703006914294901,
+      "win_rate": 0.3704775687409551,
+      "sharpe": -0.22799528478929063,
+      "max_dd": -5746.579999999354,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 5,
+      "desc": "5x5m=25min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 1441,
+        "total_pnl": -261.8400000000106
+      },
+      {
+        "period": 4,
+        "n_trades": 4763,
+        "total_pnl": -4096.619999999374
+      },
+      {
+        "period": 5,
+        "n_trades": 15,
+        "total_pnl": 8.899999999999967
+      }
+    ]
+  },
+  "5m_g5_h15_sl20": {
+    "summary": {
+      "n_trades": 6217,
+      "total_pnl": -6767.580000000016,
+      "avg_pnl": -1.0885603989062276,
+      "avg_pts": 0.0757198005468862,
+      "win_rate": 0.3808911050345826,
+      "sharpe": -0.30360923853151245,
+      "max_dd": -8473.379999998824,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 5,
+      "desc": "5x5m=25min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 1441,
+        "total_pnl": -1897.8399999997848
+      },
+      {
+        "period": 4,
+        "n_trades": 4761,
+        "total_pnl": -4992.63999999919
+      },
+      {
+        "period": 5,
+        "n_trades": 15,
+        "total_pnl": 122.89999999999989
+      }
+    ]
+  },
+  "5m_g5_h30_sl25": {
+    "summary": {
+      "n_trades": 6217,
+      "total_pnl": -6815.58000000002,
+      "avg_pnl": -1.096281164548821,
+      "avg_pts": 0.07185941772558946,
+      "win_rate": 0.3688274087180312,
+      "sharpe": -0.22691264041902506,
+      "max_dd": -11878.719999999274,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 5,
+      "desc": "5x5m=25min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 1441,
+        "total_pnl": 439.66000000001077
+      },
+      {
+        "period": 4,
+        "n_trades": 4761,
+        "total_pnl": -7194.139999999001
+      },
+      {
+        "period": 5,
+        "n_trades": 15,
+        "total_pnl": -61.100000000000044
+      }
+    ]
+  },
+  "5m_g6_h5_sl10": {
+    "summary": {
+      "n_trades": 4464,
+      "total_pnl": -4596.359999999996,
+      "avg_pnl": -1.0296505376344076,
+      "avg_pts": 0.10517473118279619,
+      "win_rate": 0.36379928315412186,
+      "sharpe": -0.5289367507075523,
+      "max_dd": -5291.999999999261,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 6,
+      "desc": "6x5m=30min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 1976,
+        "total_pnl": -4153.239999999797
+      },
+      {
+        "period": 2,
+        "n_trades": 900,
+        "total_pnl": 24.499999999993374
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 1588,
+        "total_pnl": -467.6200000000126
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "5m_g6_h10_sl15": {
+    "summary": {
+      "n_trades": 4465,
+      "total_pnl": -6840.599999999997,
+      "avg_pnl": -1.5320492721164607,
+      "avg_pts": -0.14602463605823035,
+      "win_rate": 0.38029115341545355,
+      "sharpe": -0.5978236451577716,
+      "max_dd": -8018.359999999291,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 6,
+      "desc": "6x5m=30min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 1976,
+        "total_pnl": -4483.239999999813
+      },
+      {
+        "period": 2,
+        "n_trades": 900,
+        "total_pnl": 232.49999999999204
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 1589,
+        "total_pnl": -2589.859999999898
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "5m_g6_h15_sl20": {
+    "summary": {
+      "n_trades": 4464,
+      "total_pnl": -7391.360000000009,
+      "avg_pnl": -1.6557706093189983,
+      "avg_pts": -0.20788530465949917,
+      "win_rate": 0.3918010752688172,
+      "sharpe": -0.5208602099450013,
+      "max_dd": -8951.639999999456,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 6,
+      "desc": "6x5m=30min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 1976,
+        "total_pnl": -2335.739999999876
+      },
+      {
+        "period": 2,
+        "n_trades": 900,
+        "total_pnl": -903.5000000000065
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 1588,
+        "total_pnl": -4152.119999999885
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "5m_g6_h30_sl25": {
+    "summary": {
+      "n_trades": 4475,
+      "total_pnl": -13139.000000000013,
+      "avg_pnl": -2.936089385474863,
+      "avg_pts": -0.8480446927374315,
+      "win_rate": 0.3850279329608939,
+      "sharpe": -0.7221666780202689,
+      "max_dd": -14686.359999999297,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "5m",
+      "group_size": 6,
+      "desc": "6x5m=30min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 1976,
+        "total_pnl": -2940.739999999807
+      },
+      {
+        "period": 2,
+        "n_trades": 910,
+        "total_pnl": -1498.4000000000062
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 1589,
+        "total_pnl": -8699.859999999808
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g3_h5_sl10": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 3,
+      "desc": "3x15m=45min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g3_h10_sl15": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 3,
+      "desc": "3x15m=45min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g3_h15_sl20": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 3,
+      "desc": "3x15m=45min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g3_h30_sl25": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 3,
+      "desc": "3x15m=45min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g4_h5_sl10": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 4,
+      "desc": "4x15m=60min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g4_h10_sl15": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 4,
+      "desc": "4x15m=60min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g4_h15_sl20": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 4,
+      "desc": "4x15m=60min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g4_h30_sl25": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 4,
+      "desc": "4x15m=60min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "15m_g5_h5_sl10": {
+    "summary": {
+      "n_trades": 92,
+      "total_pnl": 385.4200000000001,
+      "avg_pnl": 4.189347826086958,
+      "avg_pts": 2.714673913043479,
+      "win_rate": 0.391304347826087,
+      "sharpe": 1.4960177548645672,
+      "max_dd": -473.82000000000016,
+      "profitable_periods": 2,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 5,
+      "desc": "5x15m=75min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 89,
+        "total_pnl": 282.1399999999995
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 3,
+        "total_pnl": 103.28000000000002
+      }
+    ]
+  },
+  "15m_g5_h10_sl15": {
+    "summary": {
+      "n_trades": 92,
+      "total_pnl": 594.9199999999998,
+      "avg_pnl": 6.4665217391304335,
+      "avg_pts": 3.853260869565217,
+      "win_rate": 0.358695652173913,
+      "sharpe": 1.5950736405260173,
+      "max_dd": -647.96,
+      "profitable_periods": 2,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 5,
+      "desc": "5x15m=75min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 89,
+        "total_pnl": 452.63999999999976
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 3,
+        "total_pnl": 142.28
+      }
+    ]
+  },
+  "15m_g5_h15_sl20": {
+    "summary": {
+      "n_trades": 92,
+      "total_pnl": -58.08000000000031,
+      "avg_pnl": -0.6313043478260904,
+      "avg_pts": 0.3043478260869548,
+      "win_rate": 0.31521739130434784,
+      "sharpe": -0.14783283740782993,
+      "max_dd": -835.5200000000003,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 5,
+      "desc": "5x15m=75min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 89,
+        "total_pnl": -164.8600000000006
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 3,
+        "total_pnl": 106.78
+      }
+    ]
+  },
+  "15m_g5_h30_sl25": {
+    "summary": {
+      "n_trades": 92,
+      "total_pnl": 85.41999999999973,
+      "avg_pnl": 0.9284782608695623,
+      "avg_pts": 1.0842391304347812,
+      "win_rate": 0.34782608695652173,
+      "sharpe": 0.1715648338553426,
+      "max_dd": -1280.8400000000001,
+      "profitable_periods": 1,
+      "total_periods": 5,
+      "tf": "15m",
+      "group_size": 5,
+      "desc": "5x15m=75min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 89,
+        "total_pnl": -97.86000000000058
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 5,
+        "n_trades": 3,
+        "total_pnl": 183.27999999999997
+      }
+    ]
+  },
+  "30m_g3_h5_sl10": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 3,
+      "desc": "3x30m=90min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "30m_g3_h10_sl15": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 3,
+      "desc": "3x30m=90min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "30m_g3_h15_sl20": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 3,
+      "desc": "3x30m=90min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "30m_g3_h30_sl25": {
+    "summary": {
+      "n_trades": 0,
+      "total_pnl": 0,
+      "avg_pnl": 0,
+      "avg_pts": 0,
+      "win_rate": 0,
+      "sharpe": 0,
+      "max_dd": 0,
+      "profitable_periods": 0,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 3,
+      "desc": "3x30m=90min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 4,
+        "n_trades": 0,
+        "total_pnl": 0
+      }
+    ]
+  },
+  "30m_g4_h5_sl10": {
+    "summary": {
+      "n_trades": 1368,
+      "total_pnl": -1459.819999999999,
+      "avg_pnl": -1.067119883040935,
+      "avg_pts": 0.08644005847953251,
+      "win_rate": 0.3442982456140351,
+      "sharpe": -0.5072909734799015,
+      "max_dd": -3004.5799999999417,
+      "profitable_periods": 1,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 4,
+      "desc": "4x30m=120min",
+      "hold_bars": 5,
+      "sl_pts": 10
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 641,
+        "total_pnl": -1955.3400000000054
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 319,
+        "total_pnl": -205.06000000000077
+      },
+      {
+        "period": 4,
+        "n_trades": 408,
+        "total_pnl": 700.5799999999967
+      }
+    ]
+  },
+  "30m_g4_h10_sl15": {
+    "summary": {
+      "n_trades": 1368,
+      "total_pnl": -3508.8199999999997,
+      "avg_pnl": -2.564926900584795,
+      "avg_pts": -0.6624634502923975,
+      "win_rate": 0.34941520467836257,
+      "sharpe": -0.9255073645050662,
+      "max_dd": -4650.1199999998225,
+      "profitable_periods": 1,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 4,
+      "desc": "4x30m=120min",
+      "hold_bars": 10,
+      "sl_pts": 15
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 641,
+        "total_pnl": -3228.839999999938
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 319,
+        "total_pnl": 15.939999999998317
+      },
+      {
+        "period": 4,
+        "n_trades": 408,
+        "total_pnl": -295.9200000000032
+      }
+    ]
+  },
+  "30m_g4_h15_sl20": {
+    "summary": {
+      "n_trades": 1368,
+      "total_pnl": -1299.8200000000031,
+      "avg_pnl": -0.9501608187134526,
+      "avg_pts": 0.1449195906432737,
+      "win_rate": 0.37353801169590645,
+      "sharpe": -0.2552861854163565,
+      "max_dd": -4213.259999999882,
+      "profitable_periods": 1,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 4,
+      "desc": "4x30m=120min",
+      "hold_bars": 15,
+      "sl_pts": 20
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 641,
+        "total_pnl": -2863.3399999999733
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 319,
+        "total_pnl": -190.06000000000205
+      },
+      {
+        "period": 4,
+        "n_trades": 408,
+        "total_pnl": 1753.5799999999967
+      }
+    ]
+  },
+  "30m_g4_h30_sl25": {
+    "summary": {
+      "n_trades": 1368,
+      "total_pnl": -1582.3200000000043,
+      "avg_pnl": -1.1566666666666698,
+      "avg_pts": 0.041666666666665075,
+      "win_rate": 0.35233918128654973,
+      "sharpe": -0.21209474831055156,
+      "max_dd": -6250.819999999833,
+      "profitable_periods": 1,
+      "total_periods": 4,
+      "tf": "30m",
+      "group_size": 4,
+      "desc": "4x30m=120min",
+      "hold_bars": 30,
+      "sl_pts": 25
+    },
+    "period_stats": [
+      {
+        "period": 1,
+        "n_trades": 641,
+        "total_pnl": -4245.3399999999265
+      },
+      {
+        "period": 2,
+        "n_trades": 0,
+        "total_pnl": 0
+      },
+      {
+        "period": 3,
+        "n_trades": 319,
+        "total_pnl": -366.5600000000025
+      },
+      {
+        "period": 4,
+        "n_trades": 408,
+        "total_pnl": 3029.5800000000063
+      }
+    ]
+  }
+}
