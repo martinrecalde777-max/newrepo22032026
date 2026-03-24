@@ -316,6 +316,222 @@ def trades_to_dataframe(result: BacktestResult) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def run_backtest_triggered(
+    df: pd.DataFrame,
+    signals: pd.DataFrame,
+    trigger_type: str = "pullback",
+    trigger_window: int = 5,
+    trigger_params: dict | None = None,
+    slippage_pts: float = 0.5,
+    commission_pts: float = 0.5,
+    point_value: float = MNQ_POINT_VALUE,
+) -> BacktestResult:
+    """Trigger-aware backtest: wait for micro-level confirmation before entering.
+
+    Instead of entering at signal bar close, opens a trigger window of N bars
+    after the signal. Scans each bar for a trigger condition. If triggered,
+    enters at the trigger price. If the window expires, skips the trade.
+
+    Parameters
+    ----------
+    df : OHLCV DataFrame (1-min bars)
+    signals : output of generate_signals() or filter_no_overlap()
+    trigger_type : one of 'pullback', 'momentum', 'wick_rejection',
+                   'break_retest', 'composite'
+    trigger_window : max bars to wait for trigger after signal
+    trigger_params : extra kwargs for the trigger function
+    slippage_pts : slippage per side
+    commission_pts : round-trip commission in points
+    point_value : dollar value per point
+
+    Returns
+    -------
+    BacktestResult with trigger stats added.
+    """
+    from mnq_morphology.entry_triggers import (
+        check_pullback, check_momentum, check_wick_rejection,
+        check_break_retest, check_composite,
+    )
+
+    if len(signals) == 0:
+        return BacktestResult()
+
+    params = trigger_params or {}
+
+    open_arr = df["open"].values.astype(float)
+    close = df["close"].values.astype(float)
+    high = df["high"].values.astype(float)
+    low = df["low"].values.astype(float)
+    volume = df["volume"].values.astype(float)
+    ts_index = df.index
+    ts_to_loc = {t: i for i, t in enumerate(ts_index)}
+
+    # Precompute ATR5 and vol_ma20 for trigger checks
+    from mnq_morphology.signals import compute_atr
+    atr_series = compute_atr(df, 5).values
+    vol_ma20 = pd.Series(volume).rolling(20, min_periods=1).mean().values
+
+    total_slippage = slippage_pts * 2
+    trades: list[TradeResult] = []
+    triggered_count = 0
+    skipped_count = 0
+    break_state: dict = {}  # state tracker for break_retest
+
+    for sig_idx, (sig_ts, sig) in enumerate(signals.iterrows()):
+        if sig_ts not in ts_to_loc:
+            continue
+
+        signal_loc = ts_to_loc[sig_ts]
+        direction = sig["direction"]
+        signal_close = sig["entry_price"]
+        stop_price = sig["stop_price"]
+        target_price = sig["target_price"]
+        max_bars = int(sig["holding_bars"])
+
+        # Signal bar high/low for break_retest
+        signal_high = high[signal_loc]
+        signal_low = low[signal_loc]
+
+        # Scan trigger window
+        entry_price = None
+        entry_loc = None
+
+        tw_end = min(signal_loc + trigger_window + 1, len(close))
+        for bar in range(signal_loc + 1, tw_end):
+            bar_atr = atr_series[bar] if not np.isnan(atr_series[bar]) else 7.0
+            bar_vol_ma = vol_ma20[bar] if not np.isnan(vol_ma20[bar]) else 300.0
+
+            fired = False
+            trigger_price = 0.0
+
+            if trigger_type == "pullback":
+                fired, trigger_price = check_pullback(
+                    bar, direction, signal_close,
+                    high, low, close, bar_atr,
+                    pullback_pct=params.get("pullback_pct", 0.5),
+                )
+            elif trigger_type == "momentum":
+                fired, trigger_price = check_momentum(
+                    bar, direction, open_arr, high, low, close, bar_atr,
+                    min_body_atr=params.get("min_body_atr", 0.8),
+                    min_body_ratio=params.get("min_body_ratio", 0.55),
+                )
+            elif trigger_type == "wick_rejection":
+                fired, trigger_price = check_wick_rejection(
+                    bar, direction, open_arr, high, low, close, bar_atr,
+                    min_wick_atr=params.get("min_wick_atr", 0.5),
+                    max_body_ratio=params.get("max_body_ratio", 0.35),
+                )
+            elif trigger_type == "break_retest":
+                fired, trigger_price = check_break_retest(
+                    bar, direction, signal_high, signal_low,
+                    high, low, close, break_state, sig_idx,
+                )
+            elif trigger_type == "composite":
+                fired, trigger_price = check_composite(
+                    bar, direction, signal_close,
+                    open_arr, high, low, close, volume,
+                    bar_atr, bar_vol_ma,
+                )
+
+            if fired:
+                entry_price = trigger_price
+                entry_loc = bar
+                break
+
+        if entry_price is None:
+            skipped_count += 1
+            continue
+
+        triggered_count += 1
+
+        # Apply slippage to entry
+        if direction == "long":
+            entry_price += slippage_pts
+        else:
+            entry_price -= slippage_pts
+
+        # Recompute stop/target from TRIGGER entry price (not signal close)
+        stop_dist = sig["stop_distance"]
+        target_dist = sig["target_distance"]
+        if direction == "long":
+            stop_price = entry_price - stop_dist
+            target_price = entry_price + target_dist
+        else:
+            stop_price = entry_price + stop_dist
+            target_price = entry_price - target_dist
+
+        # Walk forward from trigger bar
+        exit_price = None
+        exit_reason = "timeout"
+        exit_loc = min(entry_loc + max_bars, len(close) - 1)
+
+        for bar in range(entry_loc + 1, min(entry_loc + max_bars + 1, len(close))):
+            bar_high = high[bar]
+            bar_low = low[bar]
+
+            if direction == "long":
+                if bar_low <= stop_price:
+                    exit_price = stop_price - slippage_pts
+                    exit_reason = "stop"
+                    exit_loc = bar
+                    break
+                if bar_high >= target_price:
+                    exit_price = target_price - slippage_pts
+                    exit_reason = "target"
+                    exit_loc = bar
+                    break
+            else:
+                if bar_high >= stop_price:
+                    exit_price = stop_price + slippage_pts
+                    exit_reason = "stop"
+                    exit_loc = bar
+                    break
+                if bar_low <= target_price:
+                    exit_price = target_price + slippage_pts
+                    exit_reason = "target"
+                    exit_loc = bar
+                    break
+
+        if exit_price is None:
+            if direction == "long":
+                exit_price = close[exit_loc] - slippage_pts
+            else:
+                exit_price = close[exit_loc] + slippage_pts
+
+        if direction == "long":
+            pnl_points = exit_price - entry_price
+        else:
+            pnl_points = entry_price - exit_price
+
+        pnl_dollars = pnl_points * point_value
+        commission_dollars = commission_pts * point_value
+        net_pnl = pnl_dollars - commission_dollars
+
+        trades.append(TradeResult(
+            entry_time=ts_index[entry_loc],
+            exit_time=ts_index[exit_loc],
+            direction=direction,
+            entry_price=entry_price,
+            exit_price=exit_price,
+            pnl_points=pnl_points,
+            pnl_dollars=pnl_dollars,
+            commission=commission_dollars,
+            net_pnl=net_pnl,
+            exit_reason=exit_reason,
+            bars_held=exit_loc - entry_loc,
+            setup_key=sig.get("setup_key", ""),
+            confidence=sig.get("confidence", 0),
+        ))
+
+    result = _compute_metrics(trades, signals, commission_pts, point_value)
+    # Attach trigger stats
+    result.triggered_count = triggered_count
+    result.skipped_count = skipped_count
+    result.trigger_rate = triggered_count / (triggered_count + skipped_count) if (triggered_count + skipped_count) > 0 else 0
+    return result
+
+
 def analyze_by_setup(result: BacktestResult) -> pd.DataFrame:
     """Break down performance by setup key."""
     df = trades_to_dataframe(result)
