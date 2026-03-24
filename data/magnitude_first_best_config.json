@@ -1,0 +1,15 @@
+{
+  "mag_threshold": 0.8,
+  "dir_threshold": 0.52,
+  "sl_multiplier": 3.0,
+  "tp_multiplier": 5.0,
+  "regime": false,
+  "metrics": {
+    "n_trades": 543,
+    "total_pnl": -1365.2200000000003,
+    "win_rate": 0.6629834254143646,
+    "profit_factor": 0.8926593162596108,
+    "sharpe": -0.7266521456022111,
+    "max_dd": -1797.5499999999915
+  }
+}
